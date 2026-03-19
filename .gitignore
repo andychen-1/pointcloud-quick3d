@@ -30,6 +30,7 @@ Makefile*
 *build-*
 /build
 .qmlls.*
+.pcd.*
 
 # Qt unit tests
 target_wrapper.*
