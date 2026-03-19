@@ -30,7 +30,10 @@ Makefile*
 *build-*
 /build
 .qmlls.*
-.pcd.*
+
+# Qt Android
+*.jar
+*.pcd
 
 # Qt unit tests
 target_wrapper.*
