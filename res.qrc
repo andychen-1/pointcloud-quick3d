@@ -1,0 +1,9 @@
+<RCC>
+    <qresource prefix="/">
+        <file>shaders/pointcloud.vert</file>
+        <file>shaders/pointcloud.frag</file>
+        <file>Components/AppTheme.qml</file>
+        <file>Components/AppTools.qml</file>
+        <file>Main.qml</file>
+    </qresource>
+</RCC>
