@@ -36,74 +36,57 @@ Window {
         Item {
             id: view3DBox
 
+            // ── 包围盒派生量 ───────────────────────────────────────────
+            readonly property vector3d pcCenter: Qt.vector3d(
+                (pcGeom.boundsMin.x + pcGeom.boundsMax.x) * 0.5,
+                (pcGeom.boundsMin.y + pcGeom.boundsMax.y) * 0.5,
+                (pcGeom.boundsMin.z + pcGeom.boundsMax.z) * 0.5
+            )
+
+            readonly property real vDistance: {
+                var dx = pcGeom.boundsMax.x - pcGeom.boundsMin.x
+                var dy = pcGeom.boundsMax.y - pcGeom.boundsMin.y
+                var dz = pcGeom.boundsMax.z - pcGeom.boundsMin.z
+                return Math.sqrt(dx*dx + dy*dy + dz*dz) * 0.45
+            }
+
+            // ── 视角预设（仅旋转角，距离统一用 viewDist）─────────────
             readonly property var viewPresets: ({
-                "front":  { ex:   0, ey:   0, ez: 0, px: 0, py: 0, pz: 10 },
-                "back":   { ex:   0, ey: 180, ez: 0, px: 0, py: 0, pz: 10 },
-                "left":   { ex:   0, ey: -90, ez: 0, px: 0, py: 0, pz: 10 },
-                "right":  { ex:   0, ey:  90, ez: 0, px: 0, py: 0, pz: 10 },
-                "top":    { ex: -90, ey:   0, ez: 0, px: 0, py: 0, pz: 10 }
+                "front": { rx:   0, ry:   0 },
+                "back":  { rx:   0, ry: 180 },
+                "left":  { rx:   0, ry: -90 },
+                "right": { rx:   0, ry:  90 },
+                "top":   { rx: -90, ry:   0 }
             })
 
+            // ── 视角切换动画（只动旋转角和摄像机距离）────────────────
             ParallelAnimation {
                 id: rotAnim
+
                 NumberAnimation {
-                    id: rotXTarget
-                    target: orbitCameraNode
-                    property: "eulerRotation.x"
-                    duration: 400
-                    easing.type: Easing.InOutQuad
+                    id: rotXAnim
+                    target: orbitCameraNode; property: "eulerRotation.x"
+                    duration: 400; easing.type: Easing.InOutQuad
                 }
                 NumberAnimation {
-                    id: rotYTarget
-                    target: orbitCameraNode
-                    property: "eulerRotation.y"
-                    duration: 400
-                    easing.type: Easing.InOutQuad
-                }
-                NumberAnimation {
-                    id: rotZTarget
-                    target: orbitCameraNode
-                    property: "eulerRotation.z"
-                    duration: 400
-                    easing.type: Easing.InOutQuad
-                }
-                NumberAnimation {
-                    id: posXTarget
-                    target: orbitCamera
-                    property: "x"
-                    duration: 400
-                    easing.type: Easing.InOutQuad
-                }
-                NumberAnimation {
-                    id: posYTarget
-                    target: orbitCamera
-                    property: "y"
-                    duration: 400
-                    easing.type: Easing.InOutQuad
-                }
-                NumberAnimation {
-                    id: posZTarget
-                    target: orbitCamera
-                    property: "z"
-                    duration: 400
-                    easing.type: Easing.InOutQuad
+                    id: rotYAnim
+                    target: orbitCameraNode; property: "eulerRotation.y"
+                    duration: 400; easing.type: Easing.InOutQuad
                 }
             }
 
             function applyPreset(name) {
                 var p = viewPresets[name]
-                if (p) {
-                    rotAnim.stop()
-                    rotXTarget.to = p.ex
-                    rotYTarget.to = p.ey
-                    rotZTarget.to = p.ez
-                    posXTarget.to = p.px
-                    posYTarget.to = p.py
-                    posZTarget.to = p.pz
-                    rotAnim.start()
-                }
+
+                rotAnim.stop()
+
+                rotXAnim.to = p.rx
+                rotYAnim.to = p.ry
+
+                rotAnim.start()
             }
 
+            // ── 3D 场景 ────────────────────────────────────────────────
             View3D {
                 id: pc3d
                 anchors.fill: parent
@@ -113,36 +96,38 @@ Window {
                     clearColor: "#0d0d0f"
                 }
 
+                camera: orbitCamera
+
                 Node {
                     id: orbitCameraNode
-
-                    eulerRotation: Qt.vector3d(view3DBox.viewPresets.front.ex,
-                                               view3DBox.viewPresets.front.ey, view3DBox.viewPresets.front.ez)
-
+                    eulerRotation: Qt.vector3d(0, 0, 0)
+                    position: view3DBox.pcCenter
                     PerspectiveCamera {
                         id: orbitCamera
                         clipNear: 0.01
                         clipFar:  2000.0
-                        position: Qt.vector3d(view3DBox.viewPresets.front.px,
-                                              view3DBox.viewPresets.front.py, view3DBox.viewPresets.front.pz)
+                        x: 0
+                        y: 0
+                        z: view3DBox.vDistance
+                    }
+                    onPositionChanged: {
+                        console.log("orbitCameraNode position: ", position);
                     }
                 }
 
-                // 轨迹球控制
                 OrbitCameraController {
                     id: orbitController
                     origin: orbitCameraNode
                     camera: orbitCamera
                 }
 
-                // 点云模型
                 Model {
                     id: pcModel
 
                     geometry: PointCloudGeometry {
                         id: pcGeom
-                        source: "assets:/fused_full_cloud_4.pcd"
-                        colorMode: PointCloudGeometry.RGB   // 或 .Intensity
+                        source: "assets:/fused_full_cloud_4-1.pcd"
+                        colorMode: PointCloudGeometry.RGB
                     }
 
                     materials: CustomMaterial {
@@ -159,55 +144,52 @@ Window {
                 source: pc3d
             }
 
-            // 控制面板
+            // ── 控制面板 ───────────────────────────────────────────────
             Column {
-                    anchors { bottom: parent.bottom; horizontalCenter: parent.horizontalCenter }
-                    anchors.bottomMargin: 16
+                anchors { bottom: parent.bottom; horizontalCenter: parent.horizontalCenter }
+                anchors.bottomMargin: 16
+                spacing: 8
+
+                Row {
+                    anchors.horizontalCenter: parent.horizontalCenter
                     spacing: 8
 
-                    // 视角切换行
-                    Row {
-                        anchors.horizontalCenter: parent.horizontalCenter
-                        spacing: 8
-
-                        Repeater {
-                            model: [
-                                { label: "前视", preset: "front"  },
-                                { label: "后视", preset: "back"   },
-                                { label: "左视", preset: "left"   },
-                                { label: "右视", preset: "right"  },
-                                { label: "俯视", preset: "top"    }
-                            ]
-                            Button {
-                                required property string label
-                                required property string preset
-                                text: label
-                                onClicked: view3DBox.applyPreset(preset)
-                            }
-                        }
-                    }
-
-                    // 颜色模式 + 点数显示行
-                    Row {
-                        anchors.horizontalCenter: parent.horizontalCenter
-                        spacing: 12
-
+                    Repeater {
+                        model: [
+                            { label: "前视", preset: "front" },
+                            { label: "后视", preset: "back"  },
+                            { label: "左视", preset: "left"  },
+                            { label: "右视", preset: "right" },
+                            { label: "俯视", preset: "top"   }
+                        ]
                         Button {
-                            text: "RGB"
-                            onClicked: pcGeom.colorMode = PointCloudGeometry.RGB
-                        }
-                        Button {
-                            text: "Intensity"
-                            onClicked: pcGeom.colorMode = PointCloudGeometry.Intensity
-                        }
-                        Label {
-                            color: "white"
-                            text: "点数: " + pcGeom.pointCount.toLocaleString()
-                            verticalAlignment: Text.AlignVCenter
+                            required property string label
+                            required property string preset
+                            text: label
+                            onClicked: view3DBox.applyPreset(preset)
                         }
                     }
                 }
-        }
 
+                Row {
+                    anchors.horizontalCenter: parent.horizontalCenter
+                    spacing: 12
+
+                    Button {
+                        text: "RGB"
+                        onClicked: pcGeom.colorMode = PointCloudGeometry.RGB
+                    }
+                    Button {
+                        text: "Intensity"
+                        onClicked: pcGeom.colorMode = PointCloudGeometry.Intensity
+                    }
+                    Label {
+                        color: "white"
+                        text: "点数: " + pcGeom.pointCount.toLocaleString()
+                        verticalAlignment: Text.AlignVCenter
+                    }
+                }
+            }
+        }
     }
 }

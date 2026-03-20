@@ -1,7 +1,6 @@
 #include "PointCloudGeometry.h"
 
 #include <QVector3D>
-#include <cmath>
 
 // 反射率调色板
 #define kPaletteSize 256
@@ -67,14 +66,6 @@ void PointCloudGeometry::setColorMode(ColorMode m) {
     rebuild();
 }
 
-QVector3D PointCloudGeometry::intensityToColor(float t) {
-    t = std::clamp(t, 0.0f, 1.0f);
-    float r = std::clamp(1.5f - std::abs(4.0f * t - 3.0f), 0.0f, 1.0f);
-    float g = std::clamp(1.5f - std::abs(4.0f * t - 2.0f), 0.0f, 1.0f);
-    float b = std::clamp(1.5f - std::abs(4.0f * t - 1.0f), 0.0f, 1.0f);
-    return {r, g, b};
-}
-
 void PointCloudGeometry::rebuild() {
     if (m_points.isEmpty()) return;
 
@@ -83,23 +74,45 @@ void PointCloudGeometry::rebuild() {
     QByteArray vertexData(m_points.size() * STRIDE, Qt::Uninitialized);
     float *dst = reinterpret_cast<float *>(vertexData.data());
 
+    // 注意：坐标变换与顶点写入保持一致
+    // Qt 坐标系：X = -pcd.y, Y = pcd.z, Z = -pcd.x
+    QVector3D bMin( 1e9f,  1e9f,  1e9f);
+    QVector3D bMax(-1e9f, -1e9f, -1e9f);
+
     for (auto &p : m_points) {
-        *dst++ =  -p.y;   // Qt X
-        *dst++ =  p.z;   // Qt Y
-        *dst++ =  -p.x;   // Qt Z
+        float qx = -p.y;
+        float qy =  p.z;
+        float qz = -p.x;
+
+        *dst++ = qx;
+        *dst++ = qy;
+        *dst++ = qz;
 
         if (m_colorMode == RGB) {
-            // packed rgb: bits [23:16]=R [15:8]=G [7:0]=B
             *dst++ = ((p.rgb >> 16) & 0xFF) / 255.0f;
             *dst++ = ((p.rgb >>  8) & 0xFF) / 255.0f;
             *dst++ = ( p.rgb        & 0xFF) / 255.0f;
         } else {
-
             PRGB c = palette[static_cast<int>(p.intensity)];
             *dst++ = c.r;
             *dst++ = c.g;
             *dst++ = c.b;
         }
+
+        // 在 Qt 坐标系下计算 AABB
+        bMin = QVector3D(std::min(bMin.x(), qx),
+                         std::min(bMin.y(), qy),
+                         std::min(bMin.z(), qz));
+        bMax = QVector3D(std::max(bMax.x(), qx),
+                         std::max(bMax.y(), qy),
+                         std::max(bMax.z(), qz));
+    }
+
+    // 更新包围盒属性并通知 QML
+    if (m_boundsMin != bMin || m_boundsMax != bMax) {
+        m_boundsMin = bMin;
+        m_boundsMax = bMax;
+        emit boundsChanged();
     }
 
     clear();
@@ -109,12 +122,6 @@ void PointCloudGeometry::rebuild() {
     addAttribute(QQuick3DGeometry::Attribute::PositionSemantic, 0, QQuick3DGeometry::Attribute::F32Type);
     addAttribute(QQuick3DGeometry::Attribute::ColorSemantic, 3 * sizeof(float), QQuick3DGeometry::Attribute::F32Type);
 
-    // AABB
-    QVector3D bMin(1e9,1e9,1e9), bMax(-1e9,-1e9,-1e9);
-    for (auto &p : m_points) {
-        bMin = QVector3D(std::min(bMin.x(),p.x), std::min(bMin.y(),p.y), std::min(bMin.z(),p.z));
-        bMax = QVector3D(std::max(bMax.x(),p.x), std::max(bMax.y(),p.y), std::max(bMax.z(),p.z));
-    }
     setBounds(bMin, bMax);
     update();
 }
