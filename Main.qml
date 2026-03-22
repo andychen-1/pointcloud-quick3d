@@ -38,26 +38,25 @@ Window {
 
             // ── 包围盒派生量 ───────────────────────────────────────────
             readonly property vector3d pcCenter: Qt.vector3d(
-                (pcGeom.boundsMin.x + pcGeom.boundsMax.x) * 0.5,
-                (pcGeom.boundsMin.y + pcGeom.boundsMax.y) * 0.5,
+                0,
+                0,
                 (pcGeom.boundsMin.z + pcGeom.boundsMax.z) * 0.5
             )
 
-            readonly property real vDistance: {
-                var dx = pcGeom.boundsMax.x - pcGeom.boundsMin.x
-                var dy = pcGeom.boundsMax.y - pcGeom.boundsMin.y
-                var dz = pcGeom.boundsMax.z - pcGeom.boundsMin.z
-                return Math.sqrt(dx*dx + dy*dy + dz*dz) * 0.45
+            readonly property real camDistance: {
+                return Math.abs(pcCenter.z) * 1.5
             }
 
             // ── 视角预设（仅旋转角，距离统一用 viewDist）─────────────
-            readonly property var viewPresets: ({
-                "front": { rx:   0, ry:   0 },
-                "back":  { rx:   0, ry: 180 },
-                "left":  { rx:   0, ry: -90 },
-                "right": { rx:   0, ry:  90 },
-                "top":   { rx: -90, ry:   0 }
-            })
+            readonly property var viewPresets: {
+                return {
+                    "front": { rx:   0, ry:   0 },
+                    "back":  { rx:   0, ry: 180 },
+                    "left":  { rx:   0, ry: -90 },
+                    "right": { rx:   0, ry:  90 },
+                    "top":   { rx: -90, ry:   0 }
+                }
+            }
 
             // ── 视角切换动画（只动旋转角和摄像机距离）────────────────
             ParallelAnimation {
@@ -108,7 +107,7 @@ Window {
                         clipFar:  2000.0
                         x: 0
                         y: 0
-                        z: view3DBox.vDistance
+                        z: view3DBox.camDistance
                     }
                     onPositionChanged: {
                         console.log("orbitCameraNode position: ", position);
@@ -128,6 +127,7 @@ Window {
                         id: pcGeom
                         source: "assets:/fused_full_cloud_4-1.pcd"
                         colorMode: PointCloudGeometry.RGB
+                        intensityMin: 18
                     }
 
                     materials: CustomMaterial {
@@ -174,6 +174,7 @@ Window {
                 Row {
                     anchors.horizontalCenter: parent.horizontalCenter
                     spacing: 12
+                    height: 40
 
                     Button {
                         text: "RGB"
@@ -183,10 +184,28 @@ Window {
                         text: "Intensity"
                         onClicked: pcGeom.colorMode = PointCloudGeometry.Intensity
                     }
+
                     Label {
                         color: "white"
                         text: "点数: " + pcGeom.pointCount.toLocaleString()
                         verticalAlignment: Text.AlignVCenter
+                    }
+
+                    Label {
+                        color: "white"
+                        text: "强度 下限: " + intensityMinSlider.value.toFixed(0)
+                        verticalAlignment: Text.AlignVCenter
+                        width: 90
+                    }
+
+                    Slider {
+                        id: intensityMinSlider
+                        from: 0; to: 255; value: pcGeom.intensityMin; stepSize: 1
+                        // 松手再触发，避免拖动过程中频繁 rebuild
+                        onPressedChanged: {
+                            if (!pressed)
+                                pcGeom.intensityMin = value
+                        }
                     }
                 }
             }

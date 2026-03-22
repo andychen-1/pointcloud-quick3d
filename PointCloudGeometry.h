@@ -16,6 +16,8 @@ class PointCloudGeometry : public QQuick3DGeometry {
     Q_PROPERTY(int pointCount READ pointCount NOTIFY pointCountChanged)
     Q_PROPERTY(QVector3D boundsMin READ boundsMin NOTIFY boundsChanged)
     Q_PROPERTY(QVector3D boundsMax READ boundsMax NOTIFY boundsChanged)
+    Q_PROPERTY(float intensityMin READ intensityMin WRITE setIntensityMin NOTIFY intensityMinChanged)
+    Q_PROPERTY(float intensityMax READ intensityMax WRITE setIntensityMax NOTIFY intensityMaxChanged)
 
 public:
     enum ColorMode { RGB, Intensity };
@@ -34,21 +36,32 @@ public:
     QVector3D boundsMin() const { return m_boundsMin; }
     QVector3D boundsMax() const { return m_boundsMax; }
 
+    float intensityMin() const { return m_intensityMin; }
+    float intensityMax() const { return m_intensityMax; }
+
+    void setIntensityMin(float v);
+    void setIntensityMax(float v);
+
 signals:
     void sourceChanged();
     void colorModeChanged();
     void pointCountChanged();
     void boundsChanged();
+    void intensityMinChanged();
+    void intensityMaxChanged();
 
 private:
     void rebuild();
 
     int m_pointCount = 0;
     QString m_source;
-    ColorMode m_colorMode = RGB;
+    ColorMode m_colorMode;
     QVector<PointXYZRGBI> m_points;
     QVector3D m_boundsMin;
     QVector3D m_boundsMax;
+
+    float m_intensityMin;
+    float m_intensityMax;
 };
 
 #endif // POINTCLOUDGEOMETRY_H
