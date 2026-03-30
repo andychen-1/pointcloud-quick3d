@@ -96,31 +96,32 @@ void PointCloudGeometry::setIntensityMax(float v) {
 float PointCloudGeometry::distanceOfCamera(ViewDirection kDirect, float kVFov, float kMargin)
 {
     const float tanHalf = std::tan(kVFov * M_PI / 180.0f * 0.5f);
-    const float xLeft = std::abs(m_boundsMin.x());
-    const float xRight = m_boundsMax.x();
-    const float yUp = m_boundsMax.y();
-    const float yMidRel = std::abs((m_boundsMax.y() - m_boundsMin.y()) * 0.5);
-    const float zMidAbs = std::abs((m_boundsMin.z() + m_boundsMax.z()) * 0.5);
-    const float zMidRel = std::abs((m_boundsMax.z() - m_boundsMin.z()) * 0.5);
 
-    qDebug() << "boundsMin " << m_boundsMin << ", boundMax " << m_boundsMax;
+    // 渲染坐标系下的包围盒派生量
+    const float halfH  = (m_boundsMax.y() - m_boundsMin.y()) * 0.5f;  // 高度半径 (Y轴)
+    const float halfW  = (m_boundsMax.x() - m_boundsMin.x()) * 0.5f;  // 宽度半径 (X轴)
+    const float halfD  = (m_boundsMax.z() - m_boundsMin.z()) * 0.5f;  // 深度半径 (Z轴)
+    const float midZ   = (m_boundsMin.z() + m_boundsMax.z()) * 0.5f;  // Z轴中心 (Back偏移用)
+    const float topY   =  m_boundsMax.y();                             // Y轴最高点 (Top用)
+    const float edgeXN =  std::abs(m_boundsMin.x());                   // X负边界距离 (Left用)
+    const float edgeXP =  m_boundsMax.x();                             // X正边界距离 (Right用)
 
     float dist = 0.0f;
     switch (kDirect) {
     case Back:
-        dist = zMidAbs;
+        dist = std::abs(midZ);
         break;
     case Front:
-        dist = yMidRel / tanHalf + zMidRel;
+        dist = halfH / tanHalf + halfD;
         break;
     case Left:
-        dist = yMidRel / tanHalf + xLeft;
+        dist = halfH / tanHalf + edgeXN;
         break;
     case Right:
-        dist = yMidRel / tanHalf + xRight;
+        dist = halfH / tanHalf + edgeXP;
         break;
     case Top:
-        dist = zMidRel / tanHalf + yUp;
+        dist = halfD / tanHalf + topY;
         break;
     case Bottom:
         break;
