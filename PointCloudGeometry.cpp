@@ -2,6 +2,8 @@
 
 #include <QVector3D>
 
+constexpr const int STRIDE = 6 * sizeof(float);
+
 // 反射率调色板
 #define kPaletteSize 256
 typedef struct {
@@ -49,14 +51,13 @@ PointCloudGeometry::PointCloudGeometry(QObject *parent)
 }
 
 void PointCloudGeometry::setSource(const QString &path) {
-    if (m_source == path)
-        return;
-    m_source = path;
-    m_points = PcdLoader::loadBinary(path);
-    m_pointCount = m_points.size();
-    emit sourceChanged();
-    emit pointCountChanged();
-    rebuild();
+    if (m_source != path) {
+        m_source = path;
+        emit sourceChanged();
+        m_points = PcdLoader::loadBinary(path);
+        setPointCount(m_points.size());
+        rebuild();
+    }
 }
 
 void PointCloudGeometry::setColorMode(ColorMode m) {
@@ -67,45 +68,82 @@ void PointCloudGeometry::setColorMode(ColorMode m) {
     rebuild();
 }
 
+void PointCloudGeometry::setPointCount(int pointCount)
+{
+    if (pointCount != m_pointCount) {
+        m_pointCount = pointCount;
+        m_vertexData.resize(m_pointCount * STRIDE);
+        emit pointCountChanged();
+    }
+}
+
 void PointCloudGeometry::setIntensityMin(float v) {
     if (qFuzzyCompare(m_intensityMin, v))
         return;
     m_intensityMin = v;
-    emit intensityMinChanged();
     rebuild();
+    emit intensityMinChanged();
 }
 
 void PointCloudGeometry::setIntensityMax(float v) {
     if (qFuzzyCompare(m_intensityMax, v))
         return;
     m_intensityMax = v;
-    emit intensityMaxChanged();
     rebuild();
+    emit intensityMaxChanged();
+}
+
+float PointCloudGeometry::distanceOfCamera(ViewDirection kDirect, float kVFov, float kMargin)
+{
+    const float tanHalf = std::tan(kVFov * M_PI / 180.0f * 0.5f);
+    const float xLeft = std::abs(m_boundsMin.x());
+    const float xRight = m_boundsMax.x();
+    const float yUp = m_boundsMax.y();
+    const float yMidRel = std::abs((m_boundsMax.y() - m_boundsMin.y()) * 0.5);
+    const float zMidAbs = std::abs((m_boundsMin.z() + m_boundsMax.z()) * 0.5);
+    const float zMidRel = std::abs((m_boundsMax.z() - m_boundsMin.z()) * 0.5);
+
+    qDebug() << "boundsMin " << m_boundsMin << ", boundMax " << m_boundsMax;
+
+    float dist = 0.0f;
+    switch (kDirect) {
+    case Back:
+        dist = zMidAbs;
+        break;
+    case Front:
+        dist = yMidRel / tanHalf + zMidRel;
+        break;
+    case Left:
+        dist = yMidRel / tanHalf + xLeft;
+        break;
+    case Right:
+        dist = yMidRel / tanHalf + xRight;
+        break;
+    case Top:
+        dist = zMidRel / tanHalf + yUp;
+        break;
+    case Bottom:
+        break;
+    }
+
+    return dist * kMargin;
 }
 
 void PointCloudGeometry::rebuild() {
-    if (m_points.isEmpty())
-        return;
+    if (m_points.isEmpty()) return;
 
-    constexpr int STRIDE = 6 * sizeof(float);
+    int filteredCount = m_points.size();
+    m_vertexData.resize(filteredCount * STRIDE);
+    float *dst = reinterpret_cast<float *>(m_vertexData.data());
 
-    // 先统计过滤后点数，预分配精确大小
-    int filteredCount = 0;
-    for (auto &p : m_points) {
-        if (p.intensity >= m_intensityMin && p.intensity <= m_intensityMax)
-            ++filteredCount;
-    }
-
-    QByteArray vertexData(filteredCount * STRIDE, Qt::Uninitialized);
-    float *dst = reinterpret_cast<float *>(vertexData.data());
-
-    QVector3D bMin(1e9f, 1e9f, 1e9f);
+    QVector3D bMin( 1e9f,  1e9f,  1e9f);
     QVector3D bMax(-1e9f, -1e9f, -1e9f);
 
     for (auto &p : m_points) {
-        // ★ 过滤：强度在 [min, max] 范围外跳过
-        if (p.intensity < m_intensityMin || p.intensity > m_intensityMax)
+        if (p.intensity < m_intensityMin || p.intensity > m_intensityMax) {
+            filteredCount--;
             continue;
+        }
 
         float qx = -p.y, qy = p.z, qz = -p.x;
         *dst++ = qx;
@@ -114,8 +152,8 @@ void PointCloudGeometry::rebuild() {
 
         if (m_colorMode == RGB) {
             *dst++ = ((p.rgb >> 16) & 0xFF) / 255.0f;
-            *dst++ = ((p.rgb >> 8) & 0xFF) / 255.0f;
-            *dst++ = (p.rgb & 0xFF) / 255.0f;
+            *dst++ = ((p.rgb >>  8) & 0xFF) / 255.0f;
+            *dst++ = ( p.rgb        & 0xFF) / 255.0f;
         } else {
             PRGB c = palette[static_cast<int>(p.intensity)];
             *dst++ = c.r;
@@ -123,26 +161,21 @@ void PointCloudGeometry::rebuild() {
             *dst++ = c.b;
         }
 
-        bMin = QVector3D(std::min(bMin.x(), qx), std::min(bMin.y(), qy),
-                         std::min(bMin.z(), qz));
-        bMax = QVector3D(std::max(bMax.x(), qx), std::max(bMax.y(), qy),
-                         std::max(bMax.z(), qz));
+        bMin = QVector3D(std::min(bMin.x(), qx), std::min(bMin.y(), qy), std::min(bMin.z(), qz));
+        bMax = QVector3D(std::max(bMax.x(), qx), std::max(bMax.y(), qy), std::max(bMax.z(), qz));
     }
 
-    // 更新实际渲染点数（供 QML Label 显示）
-    if (m_pointCount != filteredCount) {
-        m_pointCount = filteredCount;
-        emit pointCountChanged();
-    }
+    setPointCount(filteredCount);
 
+    // 保存极值坐标
     if (m_boundsMin != bMin || m_boundsMax != bMax) {
-        m_boundsMin = bMin;
-        m_boundsMax = bMax;
+        m_boundsMin  = bMin;
+        m_boundsMax  = bMax;
         emit boundsChanged();
     }
 
     clear();
-    setVertexData(vertexData);
+    setVertexData(m_vertexData);
     setStride(STRIDE);
     setPrimitiveType(QQuick3DGeometry::PrimitiveType::Points);
     addAttribute(QQuick3DGeometry::Attribute::PositionSemantic, 0, QQuick3DGeometry::Attribute::F32Type);

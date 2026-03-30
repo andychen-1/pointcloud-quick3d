@@ -34,54 +34,76 @@ Window {
         id: view3DComponent
 
         Item {
-            id: view3DBox
+            id: view3DRoot
 
-            // ── 包围盒派生量 ───────────────────────────────────────────
-            readonly property vector3d pcCenter: Qt.vector3d(
-                0,
-                0,
-                (pcGeom.boundsMin.z + pcGeom.boundsMax.z) * 0.5
-            )
-
-            readonly property real camDistance: {
-                return Math.abs(pcCenter.z) * 1.5
-            }
-
-            // ── 视角预设（仅旋转角，距离统一用 viewDist）─────────────
+            // ── 视角预设 ─────────────
             readonly property var viewPresets: {
+                // 相机FOV与缩放系数
+                var kVFov = orbitCamera.fieldOfView
+                var kMargin = 1.0
+
+                // 包围盒派生量
+                var midX = (pcGeom.boundsMin.x + pcGeom.boundsMax.x) * 0.5
+                var midY = (pcGeom.boundsMin.y + pcGeom.boundsMax.y) * 0.5
+                var midZ = (pcGeom.boundsMin.z + pcGeom.boundsMax.z) * 0.5
+                var midZ1 = midZ - pcGeom.boundsMax.z
+
                 return {
-                    "front": { rx:   0, ry:   0 },
-                    "back":  { rx:   0, ry: 180 },
-                    "left":  { rx:   0, ry: -90 },
-                    "right": { rx:   0, ry:  90 },
-                    "top":   { rx: -90, ry:   0 }
-                }
+                    "back": {
+                        nodePos: Qt.vector3d(0, 0, midZ),
+                        nodeRot: Qt.vector3d(0, 0, 0),
+                        camPos: Qt.vector3d(0, 0, pcGeom.distanceOfCamera(PointCloudGeometry.Back, kVFov, kMargin))
+                    },
+                    "front": {
+                        nodePos: Qt.vector3d(0, midY, midZ),
+                        nodeRot: Qt.vector3d(0, 180, 0),
+                        camPos: Qt.vector3d(0, 0, pcGeom.distanceOfCamera(PointCloudGeometry.Front, kVFov, kMargin))
+                    },
+                    "left": {
+                        nodePos: Qt.vector3d(0, midY, midZ),
+                        nodeRot: Qt.vector3d(0, -90, 0),
+                        camPos: Qt.vector3d(0, 0, pcGeom.distanceOfCamera(PointCloudGeometry.Left, kVFov, kMargin))
+                    },
+                    "right": {
+                        nodePos: Qt.vector3d(0, midY, midZ),
+                        nodeRot: Qt.vector3d(0, 90, 0),
+                        camPos: Qt.vector3d(0, 0, pcGeom.distanceOfCamera(PointCloudGeometry.Right, kVFov, kMargin))
+                    },
+                    "top": {
+                        nodePos: Qt.vector3d(0, 0, midZ),
+                        nodeRot: Qt.vector3d(-90, 0, 0),
+                        camPos: Qt.vector3d(0, 0, pcGeom.distanceOfCamera(PointCloudGeometry.Top, kVFov, kMargin))
+                    }
+                };
             }
 
-            // ── 视角切换动画（只动旋转角和摄像机距离）────────────────
+            // ── 视角切换动画 ────────────────
             ParallelAnimation {
                 id: rotAnim
-
-                NumberAnimation {
-                    id: rotXAnim
-                    target: orbitCameraNode; property: "eulerRotation.x"
-                    duration: 400; easing.type: Easing.InOutQuad
-                }
-                NumberAnimation {
-                    id: rotYAnim
-                    target: orbitCameraNode; property: "eulerRotation.y"
-                    duration: 400; easing.type: Easing.InOutQuad
-                }
+                NumberAnimation { id: nodeRotX;  target: orbitCameraNode; property: "eulerRotation.x"; duration: 400; easing.type: Easing.InOutQuad }
+                NumberAnimation { id: nodeRotY;  target: orbitCameraNode; property: "eulerRotation.y"; duration: 400; easing.type: Easing.InOutQuad }
+                NumberAnimation { id: nodeRotZ;  target: orbitCameraNode; property: "eulerRotation.z"; duration: 400; easing.type: Easing.InOutQuad }
+                NumberAnimation { id: nodePosX;  target: orbitCameraNode; property: "position.x";      duration: 400; easing.type: Easing.InOutQuad }
+                NumberAnimation { id: nodePosY;  target: orbitCameraNode; property: "position.y";      duration: 400; easing.type: Easing.InOutQuad }
+                NumberAnimation { id: nodePosZ;  target: orbitCameraNode; property: "position.z";      duration: 400; easing.type: Easing.InOutQuad }
+                NumberAnimation { id: camPosX;   target: orbitCamera;     property: "x";               duration: 400; easing.type: Easing.InOutQuad }
+                NumberAnimation { id: camPosY;   target: orbitCamera;     property: "y";               duration: 400; easing.type: Easing.InOutQuad }
+                NumberAnimation { id: camPosZ;   target: orbitCamera;     property: "z";               duration: 400; easing.type: Easing.InOutQuad }
             }
 
             function applyPreset(name) {
                 var p = viewPresets[name]
-
+                if (!p) return
                 rotAnim.stop()
-
-                rotXAnim.to = p.rx
-                rotYAnim.to = p.ry
-
+                nodePosX.to = p.nodePos.x
+                nodePosY.to = p.nodePos.y
+                nodePosZ.to = p.nodePos.z
+                nodeRotX.to = p.nodeRot.x
+                nodeRotY.to = p.nodeRot.y
+                nodeRotZ.to = p.nodeRot.z
+                camPosX.to  = p.camPos.x
+                camPosY.to  = p.camPos.y
+                camPosZ.to  = p.camPos.z
                 rotAnim.start()
             }
 
@@ -96,21 +118,22 @@ Window {
                 }
 
                 camera: orbitCamera
-
                 Node {
                     id: orbitCameraNode
-                    eulerRotation: Qt.vector3d(0, 0, 0)
-                    position: view3DBox.pcCenter
+                    eulerRotation: view3DRoot.viewPresets.back.nodeRot
+                    position: view3DRoot.viewPresets.back.nodePos
                     PerspectiveCamera {
                         id: orbitCamera
+                        fieldOfView: 77.2
                         clipNear: 0.01
-                        clipFar:  2000.0
-                        x: 0
-                        y: 0
-                        z: view3DBox.camDistance
+                        clipFar:  1000.0
+                        position: view3DRoot.viewPresets.back?.camPos
+                        onPositionChanged: {
+                            console.log("orbitCamera position: ", position)
+                        }
                     }
                     onPositionChanged: {
-                        console.log("orbitCameraNode position: ", position);
+                        console.log("orbitCameraNode position: ", position)
                     }
                 }
 
@@ -127,7 +150,7 @@ Window {
                         id: pcGeom
                         source: "assets:/fused_full_cloud_4-1.pcd"
                         colorMode: PointCloudGeometry.RGB
-                        intensityMin: 18
+                        // intensityMin: 18
                     }
 
                     materials: CustomMaterial {
@@ -156,8 +179,8 @@ Window {
 
                     Repeater {
                         model: [
-                            { label: "前视", preset: "front" },
                             { label: "后视", preset: "back"  },
+                            { label: "前视", preset: "front" },
                             { label: "左视", preset: "left"  },
                             { label: "右视", preset: "right" },
                             { label: "俯视", preset: "top"   }
@@ -166,7 +189,7 @@ Window {
                             required property string label
                             required property string preset
                             text: label
-                            onClicked: view3DBox.applyPreset(preset)
+                            onClicked: view3DRoot.applyPreset(preset)
                         }
                     }
                 }
@@ -201,7 +224,6 @@ Window {
                     Slider {
                         id: intensityMinSlider
                         from: 0; to: 255; value: pcGeom.intensityMin; stepSize: 1
-                        // 松手再触发，避免拖动过程中频繁 rebuild
                         onPressedChanged: {
                             if (!pressed)
                                 pcGeom.intensityMin = value

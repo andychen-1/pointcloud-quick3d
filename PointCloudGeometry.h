@@ -23,6 +23,20 @@ public:
     enum ColorMode { RGB, Intensity };
     Q_ENUM(ColorMode)
 
+    enum FOVOrientation { Vertical, Horizontal };
+    Q_ENUM(FOVOrientation)
+
+    enum ViewDirection { Front, Back, Left, Right, Top, Bottom };
+    Q_ENUM(ViewDirection)
+
+    enum ExtremumIndex {
+        BoundMinX, BoundMinY, BoundMinZ, BoundMaxX, BoundMaxY, BoundMaxZ
+    };
+    Q_ENUM(ExtremumIndex)
+
+    enum AxisIndex { XAxis, YAxis, ZAxis };
+    Q_ENUM(AxisIndex)
+
     explicit PointCloudGeometry(QObject *parent = nullptr);
 
     QString source() const { return m_source; }
@@ -31,7 +45,8 @@ public:
     ColorMode colorMode() const { return m_colorMode; }
     void setColorMode(ColorMode m);
 
-    int pointCount() const { return m_pointCount; }
+    int  pointCount() const { return m_pointCount; }
+    void setPointCount(int pointCount);
 
     QVector3D boundsMin() const { return m_boundsMin; }
     QVector3D boundsMax() const { return m_boundsMax; }
@@ -41,6 +56,8 @@ public:
 
     void setIntensityMin(float v);
     void setIntensityMax(float v);
+
+    Q_INVOKABLE float distanceOfCamera(ViewDirection kDirect, float kVFov, float kMargin);
 
 signals:
     void sourceChanged();
@@ -59,6 +76,7 @@ private:
     QVector<PointXYZRGBI> m_points;
     QVector3D m_boundsMin;
     QVector3D m_boundsMax;
+    QByteArray m_vertexData;
 
     float m_intensityMin;
     float m_intensityMax;
