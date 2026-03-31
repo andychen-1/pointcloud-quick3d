@@ -5,6 +5,7 @@
 
 #include <QObject>
 #include <QQmlEngine>
+#include <QQuaternion>
 #include <QtQuick3D/QQuick3DGeometry>
 
 class PointCloudGeometry : public QQuick3DGeometry {
@@ -57,7 +58,23 @@ public:
     void setIntensityMin(float v);
     void setIntensityMax(float v);
 
+    // 计算3D透视中的摄像机距离
     Q_INVOKABLE float distanceOfCamera(ViewDirection kDirect, float kVFov, float kMargin);
+    // 返回场景坐标（变换后）
+    Q_INVOKABLE QVector3D scenePointAt(int index) const;
+    // 返回原始 LiDAR 坐标
+    Q_INVOKABLE QVector3D rawPointAt(int index) const;
+    // 新增公开方法
+    Q_INVOKABLE int pickPoint(QVector2D touchPos,
+                              QVector3D camWorldPos,
+                              QQuaternion camWorldRot,
+                              float fovY,
+                              float aspect,
+                              float nearPlane,
+                              float farPlane,
+                              float vpWidth,
+                              float vpHeight,
+                              float tolerancePx = 40.0f);
 
 signals:
     void sourceChanged();
@@ -68,18 +85,19 @@ signals:
     void intensityMaxChanged();
 
 private:
-    void rebuild();
+    int   m_pointCount;
+    float m_intensityMin;
+    float m_intensityMax;
 
-    int m_pointCount = 0;
     QString m_source;
     ColorMode m_colorMode;
     QVector<PointXYZRGBI> m_points;
     QVector3D m_boundsMin;
     QVector3D m_boundsMax;
     QByteArray m_vertexData;
+    QVector<int>  m_visibleIndices;
 
-    float m_intensityMin;
-    float m_intensityMax;
+    void rebuild();
 };
 
 #endif // POINTCLOUDGEOMETRY_H

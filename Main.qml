@@ -43,10 +43,8 @@ Window {
                 var kMargin = 1.0
 
                 // 包围盒派生量
-                var midX = (pcGeom.boundsMin.x + pcGeom.boundsMax.x) * 0.5
                 var midY = (pcGeom.boundsMin.y + pcGeom.boundsMax.y) * 0.5
                 var midZ = (pcGeom.boundsMin.z + pcGeom.boundsMax.z) * 0.5
-                var midZ1 = midZ - pcGeom.boundsMax.z
 
                 return {
                     "back": {
@@ -143,6 +141,7 @@ Window {
                     camera: orbitCamera
                 }
 
+                // ── 点云渲染 ───────────────────────────────────────────────────
                 Model {
                     id: pcModel
 
@@ -159,6 +158,89 @@ Window {
                         fragmentShader: "shaders/pointcloud.frag"
                         sourceBlend: CustomMaterial.SrcAlpha
                         destinationBlend: CustomMaterial.OneMinusSrcAlpha
+                    }
+                }
+
+                // ── 拾取标记（3D 小球）───────────────────────────────────────────
+                Model {
+                    id: pickMarker
+                    visible: false
+                    source: "#Sphere"
+                    readonly property real targetScreenPx: 18
+
+                    scale: {
+                        const dx = position.x - orbitCamera.scenePosition.x
+                        const dy = position.y - orbitCamera.scenePosition.y
+                        const dz = position.z - orbitCamera.scenePosition.z
+                        const depth = Math.sqrt(dx*dx + dy*dy + dz*dz)
+                        if (depth < 0.001) return Qt.vector3d(0.01, 0.01, 0.01)
+                        const fovRad = orbitCamera.fieldOfView * Math.PI / 180.0
+                        const s = targetScreenPx * depth * Math.tan(fovRad * 0.5) / (pc3d.height * 0.5) / 100.0
+                        return Qt.vector3d(s, s, s)
+                    }
+
+                    materials: PrincipledMaterial {
+                        baseColor: "#FFD700"
+                        emissiveFactor: Qt.vector3d(1, 0.85, 0)  // ← 自发光，不依赖光源
+                        emissiveMap: null
+                    }
+                }
+
+                // ── 触摸事件层（覆盖 View3D）─────────────────────────────────────
+                TapHandler {
+                    id: pickTap
+                    parent: pc3d          // 挂在 View3D 上
+                    // 单次短点击触发；OrbitCameraController 处理拖动，不冲突
+                    onTapped: (eventPoint) => {
+                        const pos = eventPoint.position
+
+                        const idx = pcGeom.pickPoint(
+                            Qt.vector2d(pos.x, pos.y),
+                            orbitCamera.scenePosition,
+                            orbitCamera.sceneRotation,   // quaternion
+                            orbitCamera.fieldOfView,
+                            pc3d.width / pc3d.height,
+                            orbitCamera.clipNear,
+                            orbitCamera.clipFar,
+                            pc3d.width,
+                            pc3d.height,
+                            48                           // 48px 容差，适合手指操作
+                        )
+
+                        if (idx >= 0) {
+                            const scenePt = pcGeom.scenePointAt(idx)
+                            const rawPt   = pcGeom.rawPointAt(idx)
+                            pickMarker.position = scenePt
+                            pickMarker.visible  = true
+                            pickInfoPanel.update(rawPt, scenePt)
+                        } else {
+                            pickMarker.visible = false
+                            pickInfoPanel.visible = false
+                        }
+                    }
+                }
+
+                // ── 坐标 HUD ───────────────────────────────────────────────────
+                Rectangle {
+                    id: pickInfoPanel
+                    visible: false
+                    anchors { top: parent.top; right: parent.right }
+                    anchors.margins: 12
+                    width: 220; height: 80
+                    color: "#CC000000"; radius: 8
+
+                    function update(raw, scene) {
+                        rawLabel.text   = `X: ${raw.x.toFixed(3)}  Y: ${raw.y.toFixed(3)}  Z: ${raw.z.toFixed(3)}`
+                        sceneLabel.text = `sx: ${scene.x.toFixed(2)}  sy: ${scene.y.toFixed(2)}  sz: ${scene.z.toFixed(2)}`
+                        visible = true
+                    }
+
+                    Column {
+                        anchors { fill: parent; margins: 10 }
+                        spacing: 4
+                        Label { text: "选中点 (LiDAR 坐标)"; color: "#FFD700"; font.pixelSize: 11 }
+                        Label { id: rawLabel;   color: "white"; font.pixelSize: 11; font.family: "monospace" }
+                        Label { id: sceneLabel; color: "#AAAAAA"; font.pixelSize: 10; font.family: "monospace" }
                     }
                 }
             }

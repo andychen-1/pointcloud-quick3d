@@ -1,6 +1,6 @@
 #include "PointCloudGeometry.h"
 
-#include <QVector3D>
+#include <QMatrix4x4>
 
 constexpr const int STRIDE = 6 * sizeof(float);
 
@@ -13,7 +13,7 @@ typedef struct {
 } PRGB;
 static PRGB palette[kPaletteSize]{};
 
-static void setLidarImagePlette() {
+static void setLidarImagePalette() {
     static std::once_flag once;
     call_once(once, [] {
         for (int i = 0; i < kPaletteSize; i++) {
@@ -47,7 +47,7 @@ PointCloudGeometry::PointCloudGeometry(QObject *parent)
     , m_intensityMin{0.0f}
     , m_intensityMax{255.0f}
 {
-    setLidarImagePlette();
+    setLidarImagePalette();
 }
 
 void PointCloudGeometry::setSource(const QString &path) {
@@ -130,21 +130,96 @@ float PointCloudGeometry::distanceOfCamera(ViewDirection kDirect, float kVFov, f
     return dist * kMargin;
 }
 
+QVector3D PointCloudGeometry::scenePointAt(int index) const {
+    if (index < 0 || index >= m_points.size()) return {};
+    const auto &p = m_points[index];
+    return { -p.y, p.z, -p.x };   // 与 rebuild() 中坐标变换一致
+}
+
+QVector3D PointCloudGeometry::rawPointAt(int index) const {
+    if (index < 0 || index >= m_points.size()) return {};
+    const auto &p = m_points[index];
+    return { p.x, p.y, p.z };
+}
+
+int PointCloudGeometry::pickPoint(QVector2D touchPos,
+                                  QVector3D camWorldPos,
+                                  QQuaternion camWorldRot,
+                                  float fovY, float aspect,
+                                  float nearPlane, float farPlane,
+                                  float vpWidth, float vpHeight,
+                                  float tolerancePx)
+{
+    if (m_visibleIndices.isEmpty()) return -1;
+
+    // ── 构建 View 矩阵 ────────────────────────────────────────────
+    // View = R^-1 * T(-camPos)，R^-1 = conjugated（单位四元数）
+    QMatrix4x4 view;
+    view.rotate(camWorldRot.conjugated());
+    view.translate(-camWorldPos);
+
+    // ── 构建 Projection 矩阵 ──────────────────────────────────────
+    QMatrix4x4 proj;
+    proj.perspective(fovY, aspect, nearPlane, farPlane);
+
+    const QMatrix4x4 vp = proj * view;   // 点云模型无额外 transform
+
+    const float tolSq = tolerancePx * tolerancePx;
+    float bestDistSq  = tolSq;
+    int   bestIdx     = -1;
+
+    for (int rawIdx : m_visibleIndices) {
+        const auto &p = m_points[rawIdx];
+        const float qx = -p.y, qy = p.z, qz = -p.x;
+
+        // ── 投影到裁剪空间 ────────────────────────────────────────
+        const QVector4D clip = vp * QVector4D(qx, qy, qz, 1.0f);
+        if (clip.w() <= 0.0f) continue;        // 相机背面，跳过
+
+        // ── NDC → 屏幕像素 ────────────────────────────────────────
+        // NDC x ∈ [-1,1] → [0, vpWidth]
+        // NDC y ∈ [-1,1] → [vpHeight, 0]（Qt Y 轴向下翻转）
+        const float ndcX = clip.x() / clip.w();
+        const float ndcY = clip.y() / clip.w();
+        if (ndcX < -1.0f || ndcX > 1.0f ||
+            ndcY < -1.0f || ndcY > 1.0f) continue;   // 视锥体外
+
+        const float sx = (ndcX + 1.0f) * 0.5f * vpWidth;
+        const float sy = (1.0f - ndcY) * 0.5f * vpHeight;
+
+        const float dx = sx - touchPos.x();
+        const float dy = sy - touchPos.y();
+        const float distSq = dx * dx + dy * dy;
+
+        if (distSq < bestDistSq) {
+            bestDistSq = distSq;
+            bestIdx    = rawIdx;
+        }
+    }
+    return bestIdx;   // -1 表示未命中
+}
+
 void PointCloudGeometry::rebuild() {
     if (m_points.isEmpty()) return;
 
-    int filteredCount = m_points.size();
-    m_vertexData.resize(filteredCount * STRIDE);
+    m_visibleIndices.clear();
+    m_visibleIndices.reserve(m_points.size());
+
+    int filteredCount = 0;
+    m_vertexData.resize(m_points.size() * STRIDE);
     float *dst = reinterpret_cast<float *>(m_vertexData.data());
 
     QVector3D bMin( 1e9f,  1e9f,  1e9f);
     QVector3D bMax(-1e9f, -1e9f, -1e9f);
 
-    for (auto &p : m_points) {
+    for (int i = 0; i < m_points.size(); ++i) {
+        const auto &p = m_points[i];
         if (p.intensity < m_intensityMin || p.intensity > m_intensityMax) {
-            filteredCount--;
             continue;
         }
+
+        m_visibleIndices.append(i);
+        filteredCount++;
 
         float qx = -p.y, qy = p.z, qz = -p.x;
         *dst++ = qx;
