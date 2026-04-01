@@ -175,21 +175,19 @@ Window {
                         const depth = Math.sqrt(dx*dx + dy*dy + dz*dz)
                         if (depth < 0.001) return Qt.vector3d(0.01, 0.01, 0.01)
                         const fovRad = orbitCamera.fieldOfView * Math.PI / 180.0
-                        const s = targetScreenPx * depth
-                                  * Math.tan(fovRad * 0.5)
-                                  / (pc3d.height * 0.5)
-                                  / 100.0
+                        const s = targetScreenPx * depth * Math.tan(fovRad * 0.5) / (pc3d.height * 0.5) / 100
                         return Qt.vector3d(s, s, s)
                     }
 
                     // ── 八角角标包围盒 ─────────────────────────────────────────────
                     Model {
-                        geometry: CornerBracketGeometry { size: 1.0 }
+                        scale: Qt.vector3d(50, 50, 50)
+                        geometry: CornerBracketGeometry {}
                         materials: CustomMaterial {
                             shadingMode: CustomMaterial.Unshaded
                             vertexShader: "shaders/cornerbracket.vert"
                             fragmentShader: "shaders/cornerbracket.frag"
-                            property vector4d lineColor: Qt.vector4d(1.0, 0.843, 0.0, 1.0)
+                            property vector4d lineColor: Qt.vector4d(0.933333333, 0.376470588, 0.007843137, 1.0)
                         }
                     }
 
@@ -199,7 +197,7 @@ Window {
                         scale: Qt.vector3d(0.12, 0.12, 0.12)
                         materials: PrincipledMaterial {
                             baseColor: "#FFD700"
-                            emissiveFactor: Qt.vector3d(1, 0.85, 0)
+                            emissiveFactor: Qt.vector3d(0.898039216, 0.262745098, 0.015686275)
                             emissiveMap: null
                         }
                     }
