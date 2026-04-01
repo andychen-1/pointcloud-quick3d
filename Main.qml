@@ -161,12 +161,12 @@ Window {
                     }
                 }
 
-                // ── 拾取标记（3D 小球）───────────────────────────────────────────
-                Model {
+                // ── 拾取标记：角标包围盒 + 中心球 ──────────────────────────────────
+                Node {
                     id: pickMarker
                     visible: false
-                    source: "#Sphere"
-                    readonly property real targetScreenPx: 18
+
+                    readonly property real targetScreenPx: 60   // 包围盒半边长对应屏幕像素
 
                     scale: {
                         const dx = position.x - orbitCamera.scenePosition.x
@@ -175,16 +175,36 @@ Window {
                         const depth = Math.sqrt(dx*dx + dy*dy + dz*dz)
                         if (depth < 0.001) return Qt.vector3d(0.01, 0.01, 0.01)
                         const fovRad = orbitCamera.fieldOfView * Math.PI / 180.0
-                        const s = targetScreenPx * depth * Math.tan(fovRad * 0.5) / (pc3d.height * 0.5) / 100.0
+                        const s = targetScreenPx * depth
+                                  * Math.tan(fovRad * 0.5)
+                                  / (pc3d.height * 0.5)
+                                  / 100.0
                         return Qt.vector3d(s, s, s)
                     }
 
-                    materials: PrincipledMaterial {
-                        baseColor: "#FFD700"
-                        emissiveFactor: Qt.vector3d(1, 0.85, 0)  // ← 自发光，不依赖光源
-                        emissiveMap: null
+                    // ── 八角角标包围盒 ─────────────────────────────────────────────
+                    Model {
+                        geometry: CornerBracketGeometry { size: 1.0 }
+                        materials: CustomMaterial {
+                            shadingMode: CustomMaterial.Unshaded
+                            vertexShader: "shaders/cornerbracket.vert"
+                            fragmentShader: "shaders/cornerbracket.frag"
+                            property vector4d lineColor: Qt.vector4d(1.0, 0.843, 0.0, 1.0)
+                        }
+                    }
+
+                    // ── 中心球 ─────────────────────────────────────────────────────
+                    Model {
+                        source: "#Sphere"
+                        scale: Qt.vector3d(0.12, 0.12, 0.12)
+                        materials: PrincipledMaterial {
+                            baseColor: "#FFD700"
+                            emissiveFactor: Qt.vector3d(1, 0.85, 0)
+                            emissiveMap: null
+                        }
                     }
                 }
+
 
                 // ── 触摸事件层（覆盖 View3D）─────────────────────────────────────
                 TapHandler {

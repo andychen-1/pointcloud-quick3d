@@ -2,6 +2,8 @@
     <qresource prefix="/">
         <file>shaders/pointcloud.vert</file>
         <file>shaders/pointcloud.frag</file>
+        <file>shaders/cornerbracket.vert</file>
+        <file>shaders/cornerbracket.frag</file>
         <file>Components/AppTheme.qml</file>
         <file>Components/AppTools.qml</file>
         <file>Main.qml</file>

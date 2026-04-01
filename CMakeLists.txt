@@ -24,6 +24,8 @@ qt_add_qml_module(apppointcloud3d
     SOURCES
         AndroidUtils.h
         AndroidUtils.cpp
+        CornerBracketGeometry.h
+        CornerBracketGeometry.cpp
         PcdLoader.h
         PcdLoader.cpp
         PointCloudGeometry.h
@@ -31,6 +33,8 @@ qt_add_qml_module(apppointcloud3d
     RESOURCES
         shaders/pointcloud.frag
         shaders/pointcloud.vert
+        shaders/cornerbracket.frag
+        shaders/cornerbracket.vert
     NO_RESOURCE_TARGET_PATH
     IMPORTS
         QtQuick3D
