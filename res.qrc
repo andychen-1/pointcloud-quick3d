@@ -7,5 +7,12 @@
         <file>Components/AppTheme.qml</file>
         <file>Components/AppTools.qml</file>
         <file>Main.qml</file>
+        <file>icons/top_view.svg</file>
+        <file>icons/right_view.svg</file>
+        <file>icons/left_view.svg</file>
+        <file>icons/intensity.svg</file>
+        <file>icons/front_view.svg</file>
+        <file>icons/back_view.svg</file>
+        <file>icons/rgb.svg</file>
     </qresource>
 </RCC>
