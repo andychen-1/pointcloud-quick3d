@@ -196,7 +196,7 @@ Window {
                         source: "#Sphere"
                         scale: Qt.vector3d(0.12, 0.12, 0.12)
                         materials: PrincipledMaterial {
-                            baseColor: "#FFD700"
+                            baseColor: "#E54304"
                             emissiveFactor: Qt.vector3d(0.898039216, 0.262745098, 0.015686275)
                             emissiveMap: null
                         }
@@ -263,9 +263,53 @@ Window {
                 }
             }
 
-            DebugView {
-                source: pc3d
+            // ── 荧光光晕叠加层（仅作用于拾取标记）───────────────────────────
+            Item {
+                anchors.fill: parent
+                visible: pickMarker.visible
+                enabled: false   // 不拦截触摸事件
+
+                FrameAnimation {
+                    running: pickMarker.visible
+                    onTriggered: glowCanvas.requestPaint()
+                }
+
+                Canvas {
+                    id: glowCanvas
+                    anchors.fill: parent
+
+                    readonly property real glowRadius: 60   // 光晕半径（屏幕像素）
+
+                    onPaint: {
+                        var ctx = getContext("2d")
+                        ctx.clearRect(0, 0, width, height)
+
+                        // 将 3D 场景坐标投影到屏幕像素坐标
+                        var pt = pc3d.mapFrom3DScene(pickMarker.position)
+                        var cx = pt.x
+                        var cy = pt.y
+
+                        // 点在视锥体外时跳过绘制
+                        if (cx < 0 || cx > width || cy < 0 || cy > height) return
+
+                        // 径向渐变：中心高亮 → 外沿透明
+                        var grad = ctx.createRadialGradient(cx, cy, 0, cx, cy, glowRadius)
+                        grad.addColorStop(0.0,  "rgba(255, 215,   0, 0.35)")  // #FFD700 核心
+                        grad.addColorStop(0.15, "rgba(255, 180,   0, 0.20)")  // 中间过渡
+                        grad.addColorStop(0.3,  "rgba(255, 140,   0, 0.10)")  // 外沿淡出
+                        grad.addColorStop(0.5,  "rgba(255, 100,   0, 0.00)")  // 完全透明
+
+                        ctx.beginPath()
+                        ctx.arc(cx, cy, glowRadius, 0, Math.PI * 2)
+                        ctx.fillStyle = grad
+                        ctx.fill()
+                    }
+                }
             }
+
+            // DebugView {
+            //     source: pc3d
+            // }
 
             // ── 控制面板 ───────────────────────────────────────────────
             Column {
