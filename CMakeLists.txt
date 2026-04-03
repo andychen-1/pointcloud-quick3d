@@ -35,6 +35,13 @@ qt_add_qml_module(apppointcloud3d
         shaders/pointcloud.vert
         shaders/cornerbracket.frag
         shaders/cornerbracket.vert
+        icons/top_view.svg
+        icons/right_view.svg
+        icons/left_view.svg
+        icons/intensity.svg
+        icons/front_view.svg
+        icons/back_view.svg
+        icons/rgb.svg
     NO_RESOURCE_TARGET_PATH
     IMPORTS
         QtQuick3D
