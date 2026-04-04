@@ -42,6 +42,7 @@ qt_add_qml_module(apppointcloud3d
         icons/front_view.svg
         icons/back_view.svg
         icons/rgb.svg
+        icons/adjust_intensity.svg
     NO_RESOURCE_TARGET_PATH
     IMPORTS
         QtQuick3D

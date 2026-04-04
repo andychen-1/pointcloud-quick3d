@@ -36,7 +36,7 @@ Window {
         Item {
             id: view3DRoot
 
-            // ── 视角预设 ────────────────────
+            // ── 视角预设 ────────────────────────────────────────────────────
             readonly property var viewPresets: {
                 var kVFov   = orbitCamera.fieldOfView
                 var kMargin = 1.0
@@ -51,7 +51,17 @@ Window {
                 }
             }
 
-            // ── 视角切换动画 ─────────────────
+            function applyPreset(name) {
+                var p = viewPresets[name]
+                if (!p) return
+                rotAnim.stop()
+                nodePosX.to = p.nodePos.x; nodePosY.to = p.nodePos.y; nodePosZ.to = p.nodePos.z
+                nodeRotX.to = p.nodeRot.x; nodeRotY.to = p.nodeRot.y; nodeRotZ.to = p.nodeRot.z
+                camPosX.to  = p.camPos.x;  camPosY.to  = p.camPos.y;  camPosZ.to  = p.camPos.z
+                rotAnim.start()
+            }
+
+            // ── 视角切换动画 ─────────────────────────────────────────────────
             ParallelAnimation {
                 id: rotAnim
                 NumberAnimation { id: nodeRotX; target: orbitCameraNode; property: "eulerRotation.x"; duration: 400; easing.type: Easing.InOutQuad }
@@ -63,16 +73,6 @@ Window {
                 NumberAnimation { id: camPosX;  target: orbitCamera;     property: "x";               duration: 400; easing.type: Easing.InOutQuad }
                 NumberAnimation { id: camPosY;  target: orbitCamera;     property: "y";               duration: 400; easing.type: Easing.InOutQuad }
                 NumberAnimation { id: camPosZ;  target: orbitCamera;     property: "z";               duration: 400; easing.type: Easing.InOutQuad }
-            }
-
-            function applyPreset(name) {
-                var p = viewPresets[name]
-                if (!p) return
-                rotAnim.stop()
-                nodePosX.to = p.nodePos.x; nodePosY.to = p.nodePos.y; nodePosZ.to = p.nodePos.z
-                nodeRotX.to = p.nodeRot.x; nodeRotY.to = p.nodeRot.y; nodeRotZ.to = p.nodeRot.z
-                camPosX.to  = p.camPos.x;  camPosY.to  = p.camPos.y;  camPosZ.to  = p.camPos.z
-                rotAnim.start()
             }
 
             // ── 3D 场景 ─────────────────────────────────────────────────────
@@ -245,9 +245,15 @@ Window {
                 }
             }
 
-            // ═══════════════════════════════════════════════════════════════
+            // ── 全屏关闭遮罩 ──────────────────────────────
+            MouseArea {
+                anchors.fill: parent
+                z: 15
+                visible: leftToolbar.colorGroupOpen || leftToolbar.viewGroupOpen
+                onClicked: leftToolbar.closeGroups()
+            }
+
             // ── 左侧垂直浮动工具条 ────────────────────────────────────────────
-            // ═══════════════════════════════════════════════════════════════
             Item {
                 id: leftToolbar
                 z: 20
@@ -291,9 +297,7 @@ Window {
                     id: toolbarCol
                     spacing: leftToolbar.colSpacing
 
-                    // ──────────────────────────────────────────────────────
-                    // 功能组 1：颜色模式
-                    // ──────────────────────────────────────────────────────
+                    // ── 功能组 1：颜色模式 ────────────────────────────────────
                     Row {
                         id: colorGroupRow
                         spacing: leftToolbar.groupGap
@@ -394,9 +398,7 @@ Window {
                         }
                     }
 
-                    // ──────────────────────────────────────────────────────
-                    // 功能组 2：视角切换
-                    // ──────────────────────────────────────────────────────
+                    // ── 功能组 2：视角切换 ────────────────────────────────────
                     Row {
                         id: viewGroupRow
                         spacing: leftToolbar.groupGap
@@ -496,10 +498,10 @@ Window {
                                 }
                             }
                         }
+
                     }
                 }
             }
-            // ═══════════════════════════════════════════════════════════════
 
             // ── 底部辅助信息条（点数 + 强度滤波滑条）───────────────────────
             Row {
