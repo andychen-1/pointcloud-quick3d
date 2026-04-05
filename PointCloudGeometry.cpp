@@ -55,6 +55,7 @@ void PointCloudGeometry::setSource(const QString &path) {
         m_source = path;
         emit sourceChanged();
         m_points = PcdLoader::loadBinary(path);
+        m_vertexData.resize(m_points.size() * STRIDE);
         setPointCount(m_points.size());
         rebuild();
     }
@@ -72,7 +73,6 @@ void PointCloudGeometry::setPointCount(int pointCount)
 {
     if (pointCount != m_pointCount) {
         m_pointCount = pointCount;
-        m_vertexData.resize(m_pointCount * STRIDE);
         emit pointCountChanged();
     }
 }
@@ -206,7 +206,6 @@ void PointCloudGeometry::rebuild() {
     m_visibleIndices.reserve(m_points.size());
 
     int filteredCount = 0;
-    m_vertexData.resize(m_points.size() * STRIDE);
     float *dst = reinterpret_cast<float *>(m_vertexData.data());
 
     QVector3D bMin( 1e9f,  1e9f,  1e9f);
@@ -251,7 +250,7 @@ void PointCloudGeometry::rebuild() {
     }
 
     clear();
-    setVertexData(m_vertexData);
+    setVertexData(m_vertexData.left(filteredCount * STRIDE));
     setStride(STRIDE);
     setPrimitiveType(QQuick3DGeometry::PrimitiveType::Points);
     addAttribute(QQuick3DGeometry::Attribute::PositionSemantic, 0, QQuick3DGeometry::Attribute::F32Type);

@@ -14,5 +14,6 @@
         <file>icons/front_view.svg</file>
         <file>icons/back_view.svg</file>
         <file>icons/rgb.svg</file>
+        <file>icons/pointcloud_filter.svg</file>
     </qresource>
 </RCC>
