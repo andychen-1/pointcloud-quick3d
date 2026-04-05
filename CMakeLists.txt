@@ -21,6 +21,7 @@ qt_add_qml_module(apppointcloud3d
         Main.qml
         Components/AppTheme.qml
         Components/AppTools.qml
+        Pages/View3DForPC.qml
     SOURCES
         AndroidUtils.h
         AndroidUtils.cpp
@@ -46,7 +47,6 @@ qt_add_qml_module(apppointcloud3d
     NO_RESOURCE_TARGET_PATH
     IMPORTS
         QtQuick3D
-        QML_FILES Pages/View3DForPC.qml
 )
 
 set_property(TARGET apppointcloud3d APPEND PROPERTY

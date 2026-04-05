@@ -30,9 +30,9 @@ Item {
         var p = viewPresets[name]
         if (!p) return
         rotAnim.stop()
-        nodePosX.to = p.nodePos.x; nodePosY.to = p.nodePos.y; nodePosZ.to = p.nodePos.z
         nodeRotX.to = p.nodeRot.x; nodeRotY.to = p.nodeRot.y; nodeRotZ.to = p.nodeRot.z
-        camPosX.to  = p.camPos.x;  camPosY.to  = p.camPos.y;  camPosZ.to  = p.camPos.z
+        orbitCameraNode.position = p.nodePos
+        orbitCamera.position = p.camPos
         rotAnim.start()
     }
 
@@ -42,12 +42,6 @@ Item {
         NumberAnimation { id: nodeRotX; target: orbitCameraNode; property: "eulerRotation.x"; duration: 400; easing.type: Easing.InOutQuad }
         NumberAnimation { id: nodeRotY; target: orbitCameraNode; property: "eulerRotation.y"; duration: 400; easing.type: Easing.InOutQuad }
         NumberAnimation { id: nodeRotZ; target: orbitCameraNode; property: "eulerRotation.z"; duration: 400; easing.type: Easing.InOutQuad }
-        NumberAnimation { id: nodePosX; target: orbitCameraNode; property: "position.x";      duration: 400; easing.type: Easing.InOutQuad }
-        NumberAnimation { id: nodePosY; target: orbitCameraNode; property: "position.y";      duration: 400; easing.type: Easing.InOutQuad }
-        NumberAnimation { id: nodePosZ; target: orbitCameraNode; property: "position.z";      duration: 400; easing.type: Easing.InOutQuad }
-        NumberAnimation { id: camPosX;  target: orbitCamera;     property: "x";               duration: 400; easing.type: Easing.InOutQuad }
-        NumberAnimation { id: camPosY;  target: orbitCamera;     property: "y";               duration: 400; easing.type: Easing.InOutQuad }
-        NumberAnimation { id: camPosZ;  target: orbitCamera;     property: "z";               duration: 400; easing.type: Easing.InOutQuad }
     }
 
     // ── 3D 场景 ─────────────────────────────────────────────────────
