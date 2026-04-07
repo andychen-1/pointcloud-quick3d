@@ -13,35 +13,57 @@ Item {
 
     // ── 视角预设 ─────────────────────────────────────────────────────
     readonly property var viewPresets: {
-        var kVFov   = orbitCamera.fieldOfView
-        var kMargin = 1.0
-        var midY = (pcGeom.boundsMin.y + pcGeom.boundsMax.y) * 0.5
-        var midZ = (pcGeom.boundsMin.z + pcGeom.boundsMax.z) * 0.5
+        const kVFov   = orbitCamera.fieldOfView
+
+        const midY = (pcGeom.boundsMin.y + pcGeom.boundsMax.y) * 0.5
+        const midZ = (pcGeom.boundsMin.z + pcGeom.boundsMax.z) * 0.5
+
+        const halfT = Math.tan(kVFov * Math.PI / 180.0 * 0.5);
+        const halfD = (pcGeom.boundsMax.z - pcGeom.boundsMin.z) * 0.5;
+        const halfH  = (pcGeom.boundsMax.y - pcGeom.boundsMin.y) * 0.5;
+
+        const distH = halfH / halfT
+        const distD = halfD / halfT
+
+        const edgeXN =  Math.abs(pcGeom.boundsMin.x);
+        const edgeXP =  pcGeom.boundsMax.x;
+        const edgeYP = pcGeom.boundsMax.y;
+
+
+        // console.log("boundsMin=", pcGeom.boundsMin, ", boundsMax=", pcGeom.boundsMax)
+        // console.log("midY=", midY, ", midZ=", midZ)
+        // console.log("halfT=", halfT, ", halfD=", halfD, ", halfH=", halfH)
+        // console.log("edgeXN=", edgeXN, ", edgeXP=", edgeXP, ", edgeYP=", edgeYP)
+
         return {
-            "back":  { nodePos: Qt.vector3d(0, 0, midZ),    nodeRot: Qt.vector3d(0,    0, 0), camPos: Qt.vector3d(0, 0, pcGeom.distanceOfCamera(PointCloudGeometry.Back,  kVFov, kMargin)) },
-            "front": { nodePos: Qt.vector3d(0, midY, midZ), nodeRot: Qt.vector3d(0,  180, 0), camPos: Qt.vector3d(0, 0, pcGeom.distanceOfCamera(PointCloudGeometry.Front, kVFov, kMargin)) },
-            "left":  { nodePos: Qt.vector3d(0, midY, midZ), nodeRot: Qt.vector3d(0,  -90, 0), camPos: Qt.vector3d(0, 0, pcGeom.distanceOfCamera(PointCloudGeometry.Left,  kVFov, kMargin)) },
-            "right": { nodePos: Qt.vector3d(0, midY, midZ), nodeRot: Qt.vector3d(0,   90, 0), camPos: Qt.vector3d(0, 0, pcGeom.distanceOfCamera(PointCloudGeometry.Right, kVFov, kMargin)) },
-            "top":   { nodePos: Qt.vector3d(0, 0, midZ),    nodeRot: Qt.vector3d(-90,  0, 0), camPos: Qt.vector3d(0, 0, pcGeom.distanceOfCamera(PointCloudGeometry.Top,   kVFov, kMargin)) }
+            "back":  { nodePos: Qt.vector3d(0, 0, midZ),    nodeRot: Qt.vector3d(0, 0, 0), camPos: Qt.vector3d(0, 0, -midZ) },
+            "front": { nodePos: Qt.vector3d(0, midY, midZ), nodeRot: Qt.vector3d(0,  180, 0), camPos: Qt.vector3d(0, 0, distH + halfD) },
+            "left":  { nodePos: Qt.vector3d(0, midY, midZ), nodeRot: Qt.vector3d(0,  -90, 0), camPos: Qt.vector3d(0, 0, distH + edgeXN) },
+            "right": { nodePos: Qt.vector3d(0, midY, midZ), nodeRot: Qt.vector3d(0,   90, 0), camPos: Qt.vector3d(0, 0, distH + edgeXP) },
+            "top":   { nodePos: Qt.vector3d(0, 0, midZ - midY), nodeRot: Qt.vector3d(-90,  0, 0), camPos: Qt.vector3d(0, 0, distD + edgeYP - midY) }
         }
     }
 
+    property string viewName: "back"
+
     function applyPreset(name) {
-        var p = viewPresets[name]
-        if (!p) return
+        viewName = name || viewName
+        const p = viewPresets[viewName]
         rotAnim.stop()
-        nodeRotX.to = p.nodeRot.x; nodeRotY.to = p.nodeRot.y; nodeRotZ.to = p.nodeRot.z
         orbitCameraNode.position = p.nodePos
         orbitCamera.position = p.camPos
+        nodeRotX.to = p.nodeRot.x
+        nodeRotY.to = p.nodeRot.y
+        nodeRotZ.to = p.nodeRot.z
         rotAnim.start()
     }
 
     // ── 视角切换动画 ─────────────────────────────────────────────────
     ParallelAnimation {
         id: rotAnim
-        NumberAnimation { id: nodeRotX; target: orbitCameraNode; property: "eulerRotation.x"; duration: 400; easing.type: Easing.InOutQuad }
-        NumberAnimation { id: nodeRotY; target: orbitCameraNode; property: "eulerRotation.y"; duration: 400; easing.type: Easing.InOutQuad }
-        NumberAnimation { id: nodeRotZ; target: orbitCameraNode; property: "eulerRotation.z"; duration: 400; easing.type: Easing.InOutQuad }
+        NumberAnimation { id: nodeRotX; target: orbitCameraNode; property: "eulerRotation.x"; duration: 200; easing.type: Easing.InOutQuad }
+        NumberAnimation { id: nodeRotY; target: orbitCameraNode; property: "eulerRotation.y"; duration: 200; easing.type: Easing.InOutQuad }
+        NumberAnimation { id: nodeRotZ; target: orbitCameraNode; property: "eulerRotation.z"; duration: 200; easing.type: Easing.InOutQuad }
     }
 
     // ── 3D 场景 ─────────────────────────────────────────────────────
@@ -58,14 +80,20 @@ Item {
 
         Node {
             id: orbitCameraNode
-            eulerRotation: view3DRoot.viewPresets.back.nodeRot
-            position:      view3DRoot.viewPresets.back.nodePos
+            onPositionChanged: {
+                console.log("orbitCameraNode position: ", position)
+            }
             PerspectiveCamera {
                 id: orbitCamera
                 fieldOfView: 77.2
                 clipNear: 0.01
                 clipFar:  1000.0
-                position: view3DRoot.viewPresets.back?.camPos
+                onPositionChanged: {
+                    console.log("orbitCamera position: ", position)
+                }
+                onEulerRotationChanged: {
+                    console.log("orbitCamera eulerRotation: ", eulerRotation)
+                }
             }
         }
 
@@ -82,6 +110,9 @@ Item {
                 id: pcGeom
                 source: "assets:/fused_full_cloud_4-1.pcd"
                 colorMode: PointCloudGeometry.RGB
+                onPointCountChanged: {
+                    view3DRoot.applyPreset()
+                }
             }
             materials: CustomMaterial {
                 shadingMode: CustomMaterial.Unshaded
@@ -482,11 +513,12 @@ Item {
                 Item {
                     visible: leftToolbar.filterGroupOpen
                     width:   filterPanel.width
-                    height:  filterPanel.height
+                    height:  leftToolbar.btnSize   // ← 固定，不随面板内容变化
+                    clip:    false                 // ← 允许 filterPanel 向下溢出
 
                     Rectangle {
                         id: filterPanel
-                        anchors.top: parent.top
+                        anchors.top: parent.top    // 顶部与主按钮行对齐
                         width:  filterContent.width + 24
                         height: filterContent.height + 24
                         radius: 10
@@ -528,7 +560,7 @@ Item {
                                 Row {
                                     width: parent.width
                                     Label {
-                                        text: "反射率"
+                                        text: "反射率过滤"
                                         color: "#AAAAAA"
                                         font.pixelSize: 11
                                     }

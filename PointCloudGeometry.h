@@ -58,8 +58,6 @@ public:
     void setIntensityMin(float v);
     void setIntensityMax(float v);
 
-    // 计算3D透视中的摄像机距离
-    Q_INVOKABLE float distanceOfCamera(ViewDirection kDirect, float kVFov, float kMargin);
     // 返回场景坐标（变换后）
     Q_INVOKABLE QVector3D scenePointAt(int index) const;
     // 返回原始 LiDAR 坐标

@@ -93,43 +93,6 @@ void PointCloudGeometry::setIntensityMax(float v) {
     emit intensityMaxChanged();
 }
 
-float PointCloudGeometry::distanceOfCamera(ViewDirection kDirect, float kVFov, float kMargin)
-{
-    const float tanHalf = std::tan(kVFov * M_PI / 180.0f * 0.5f);
-
-    // 渲染坐标系下的包围盒派生量
-    const float halfH  = (m_boundsMax.y() - m_boundsMin.y()) * 0.5f;  // 高度半径 (Y轴)
-    const float halfW  = (m_boundsMax.x() - m_boundsMin.x()) * 0.5f;  // 宽度半径 (X轴)
-    const float halfD  = (m_boundsMax.z() - m_boundsMin.z()) * 0.5f;  // 深度半径 (Z轴)
-    const float midZ   = (m_boundsMin.z() + m_boundsMax.z()) * 0.5f;  // Z轴中心 (Back偏移用)
-    const float topY   =  m_boundsMax.y();                             // Y轴最高点 (Top用)
-    const float edgeXN =  std::abs(m_boundsMin.x());                   // X负边界距离 (Left用)
-    const float edgeXP =  m_boundsMax.x();                             // X正边界距离 (Right用)
-
-    float dist = 0.0f;
-    switch (kDirect) {
-    case Back:
-        dist = std::abs(midZ);
-        break;
-    case Front:
-        dist = halfH / tanHalf + halfD;
-        break;
-    case Left:
-        dist = halfH / tanHalf + edgeXN;
-        break;
-    case Right:
-        dist = halfH / tanHalf + edgeXP;
-        break;
-    case Top:
-        dist = halfD / tanHalf + topY;
-        break;
-    case Bottom:
-        break;
-    }
-
-    return dist * kMargin;
-}
-
 QVector3D PointCloudGeometry::scenePointAt(int index) const {
     if (index < 0 || index >= m_points.size()) return {};
     const auto &p = m_points[index];
@@ -240,8 +203,6 @@ void PointCloudGeometry::rebuild() {
         bMax = QVector3D(std::max(bMax.x(), qx), std::max(bMax.y(), qy), std::max(bMax.z(), qz));
     }
 
-    setPointCount(filteredCount);
-
     // 保存极值坐标
     if (m_boundsMin != bMin || m_boundsMax != bMax) {
         m_boundsMin  = bMin;
@@ -257,4 +218,6 @@ void PointCloudGeometry::rebuild() {
     addAttribute(QQuick3DGeometry::Attribute::ColorSemantic, 3 * sizeof(float), QQuick3DGeometry::Attribute::F32Type);
     setBounds(bMin, bMax);
     update();
+
+    setPointCount(filteredCount);
 }
