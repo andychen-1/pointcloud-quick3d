@@ -80,20 +80,11 @@ Item {
 
         Node {
             id: orbitCameraNode
-            onPositionChanged: {
-                console.log("orbitCameraNode position: ", position)
-            }
             PerspectiveCamera {
                 id: orbitCamera
                 fieldOfView: 77.2
                 clipNear: 0.01
                 clipFar:  1000.0
-                onPositionChanged: {
-                    console.log("orbitCamera position: ", position)
-                }
-                onEulerRotationChanged: {
-                    console.log("orbitCamera eulerRotation: ", eulerRotation)
-                }
             }
         }
 
@@ -111,7 +102,9 @@ Item {
                 source: "assets:/fused_full_cloud_4-1.pcd"
                 colorMode: PointCloudGeometry.RGB
                 onPointCountChanged: {
-                    view3DRoot.applyPreset()
+                    if (pointCount > 0) {
+                        view3DRoot.applyPreset()
+                    }
                 }
             }
             materials: CustomMaterial {
