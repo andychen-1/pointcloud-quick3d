@@ -49,6 +49,7 @@ Item {
     function applyPreset(name) {
         viewName = name || viewName
         const p = viewPresets[viewName]
+        // console.log("viewName=", viewName, ", p.nodeRot=", p.nodeRot, ", p.nodePos=", p.nodePos, ", p.camPos=", p.camPos)
         rotAnim.stop()
         orbitCameraNode.position = p.nodePos
         orbitCamera.position = p.camPos
@@ -103,7 +104,12 @@ Item {
                 colorMode: PointCloudGeometry.RGB
                 onPointCountChanged: {
                     if (pointCount > 0) {
-                        view3DRoot.applyPreset()
+                        view3DRoot.applyPreset("back")
+                    }
+                }
+                Component.onCompleted: {
+                    if (pointCount > 0) {
+                        view3DRoot.applyPreset("back")
                     }
                 }
             }
@@ -603,4 +609,3 @@ Item {
     }
     // ═══════════════════════════════════════════════════════════════
 }
-

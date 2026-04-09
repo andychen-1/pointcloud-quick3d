@@ -44,6 +44,7 @@ qt_add_qml_module(apppointcloud3d
         icons/back_view.svg
         icons/rgb.svg
         icons/pointcloud_filter.svg
+        icons/close_small.svg
     NO_RESOURCE_TARGET_PATH
     IMPORTS
         QtQuick3D

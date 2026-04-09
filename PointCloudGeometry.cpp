@@ -56,7 +56,6 @@ void PointCloudGeometry::setSource(const QString &path) {
         emit sourceChanged();
         m_points = PcdLoader::loadBinary(path);
         m_vertexData.resize(m_points.size() * STRIDE);
-        setPointCount(m_points.size());
         rebuild();
     }
 }
