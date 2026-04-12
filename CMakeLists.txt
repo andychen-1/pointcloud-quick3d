@@ -31,6 +31,8 @@ qt_add_qml_module(apppointcloud3d
         PcdLoader.cpp
         PointCloudGeometry.h
         PointCloudGeometry.cpp
+        EventStealingPreventor.h
+        EventStealingPreventor.cpp
     RESOURCES
         shaders/pointcloud.frag
         shaders/pointcloud.vert
