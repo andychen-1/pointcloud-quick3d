@@ -1,31 +1,31 @@
-#include "EventStealingPreventor.h"
+#include "EventGrabGuard.h"
 #include <QTouchEvent>
 #include <QMouseEvent>
 #include <QQuickWindow>
 
-EventStealingPreventor::EventStealingPreventor(QObject *parent) : QObject(parent) {}
+EventGrabGuard::EventGrabGuard(QObject *parent) : QObject(parent) {}
 
-void EventStealingPreventor::setGuardedItem(QQuickItem *item) {
+void EventGrabGuard::setGuardedItem(QQuickItem *item) {
     if (m_item == item) return;
     m_item = item;
     emit guardedItemChanged();
     reInstall();
 }
 
-void EventStealingPreventor::setActive(bool v) {
+void EventGrabGuard::setActive(bool v) {
     if (m_active == v) return;
     m_active = v;
     if (!v) setBlocking(false);
     emit activeChanged();
 }
 
-void EventStealingPreventor::setBlocking(bool v) {
+void EventGrabGuard::setBlocking(bool v) {
     if (m_blocking == v) return;
     m_blocking = v;
     emit blockingChanged();
 }
 
-void EventStealingPreventor::reInstall() {
+void EventGrabGuard::reInstall() {
     if (m_window) m_window->removeEventFilter(this);
     if (!m_item)  return;
 
@@ -44,7 +44,7 @@ void EventStealingPreventor::reInstall() {
     }
 }
 
-bool EventStealingPreventor::eventFilter(QObject *, QEvent *event) {
+bool EventGrabGuard::eventFilter(QObject *, QEvent *event) {
     if (!m_active || !m_item || !m_item->isVisible())
         return false;   // ← 始终不消费，事件正常流通
 

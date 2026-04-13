@@ -44,11 +44,10 @@ Item {
                 "top":   { nodePos: Qt.vector3d(0, 0, midZ - midY), nodeRot: Qt.vector3d(-90,  0, 0), camPos: Qt.vector3d(0, 0, distD + edgeYP - midY) }
             }
         }
-
     }
 
     function applyPreset(name) {
-        props.viewName = name || defaultViewName
+        props.viewName = (name || props.viewName) || defaultViewName
         const p = props.viewPresets[props.viewName]
         // console.log("viewName=", viewName, ", p.nodeRot=", p.nodeRot, ", p.nodePos=", p.nodePos, ", p.camPos=", p.camPos)
         rotAnim.stop()
@@ -105,7 +104,7 @@ Item {
             }
         }
 
-        EventStealingPreventor {
+        EventGrabGuard {
             id: blocker
             guardedItem: pickInfoPanel
             active: pickInfoPanel.visible
@@ -242,21 +241,6 @@ Item {
         height: headerRow.height + divider.height + selListView.height + 24
         color: "#10FFFFFF"
         radius: 8
-
-        // MouseArea {
-        //     anchors.fill: parent
-        //     hoverEnabled: true
-        //     preventStealing: true
-        //     onPressed: function(mouse) {
-        //         pc3d.enabled = false
-        //     }
-        //     onEntered: {
-        //         pc3d.enabled = false
-        //     }
-        //     onExited: {
-        //         pc3d.enabled = true
-        //     }
-        // }
 
         // ── 标题行 ──────────────────────────────────────────────
         Row {
@@ -425,359 +409,38 @@ Item {
         }
     }
 
-    // ── 全屏关闭遮罩 ─────────────────────────────────────────────────
+    // ── 工具条遮罩（任意触碰触发工具条按钮组关闭） ────────────────────────
     MouseArea {
         anchors.fill: parent
-        preventStealing: true
         enabled: leftToolbar.anyGroupOpen
-        onClicked: leftToolbar.closeGroups()
-
-        onPressed: {
-            console.log("toolbar mask pressed")
-        }
+        onPressed: leftToolbar.closeGroups()
     }
 
     // ═══════════════════════════════════════════════════════════════
     // ── 左侧垂直浮动工具条 ───────────────────────────────────────────
     // ═══════════════════════════════════════════════════════════════
-    Item {
+    PC3DToolbar {
         id: leftToolbar
-        z: 20
-        anchors {
-            left:           parent.left
-            verticalCenter: parent.verticalCenter
-            leftMargin:     60
-        }
-        width:  toolbarCol.width
-        height: toolbarCol.height
+        pcGeomAttrs.pointCount: pcGeom.pointCount
+        pcGeomAttrs.firstIntensity: pcGeom.intensityMin
+        pcGeomAttrs.secondIntensity: pcGeom.intensityMax
 
-        readonly property int   btnSize:    44
-        readonly property int   iconSize:   26
-        readonly property int   groupGap:   6
-        readonly property int   colSpacing: 8
-        readonly property real  bgAlpha:    0.78
-        readonly property color accentColor: "#E57B04"
-
-        property bool colorGroupOpen:  false
-        property bool viewGroupOpen:   false
-        property bool filterGroupOpen: false
-
-        readonly property bool anyGroupOpen: colorGroupOpen || viewGroupOpen || filterGroupOpen
-
-        function closeGroups() {
-            colorGroupOpen  = false
-            viewGroupOpen   = false
-            filterGroupOpen = false
-        }
-
-        function openGroup(name) {
-            colorGroupOpen  = (name === "color")
-            viewGroupOpen   = (name === "view")
-            filterGroupOpen = (name === "filter")
-        }
-
-        property string activeColor: "RGB"
-        property string activeView:  "back"
-
-        Column {
-            id: toolbarCol
-            spacing: leftToolbar.colSpacing
-
-            // ══════════════════════════════════════════════════════
-            // 组 1：颜色模式
-            // ══════════════════════════════════════════════════════
-            Row {
-                spacing: leftToolbar.groupGap
-
-                Rectangle {
-                    id: colorMainBtn
-                    width:  leftToolbar.btnSize
-                    height: leftToolbar.btnSize
-                    radius: 10
-                    color:  leftToolbar.colorGroupOpen
-                            ? Qt.rgba(0.898, 0.482, 0.016, 0.92)
-                            : Qt.rgba(0.102, 0.11, 0.125, leftToolbar.bgAlpha)
-                    Behavior on color { ColorAnimation { duration: 180 } }
-
-                    property string currentIcon: {
-                        switch (leftToolbar.activeColor) {
-                            case "RGB": return "qrc:/icons/rgb.svg"
-                            case "Intensity": return "qrc:/icons/intensity.svg"
-                        }
-                    }
-
-                    ToolButton {
-                        anchors.fill: parent
-                        icon.source:  parent.currentIcon
-                        icon.width:   leftToolbar.iconSize
-                        icon.height:  leftToolbar.iconSize
-                        icon.color:   leftToolbar.colorGroupOpen ? "white" : "#B0B8C8"
-                        display:      AbstractButton.IconOnly
-                        background:   Item {}
-                        onClicked:    leftToolbar.colorGroupOpen
-                                      ? leftToolbar.closeGroups()
-                                      : leftToolbar.openGroup("color")
-                    }
-                }
-
-                Row {
-                    spacing: leftToolbar.groupGap
-                    visible: leftToolbar.colorGroupOpen
-                    Rectangle {
-                        width:  colorSubRow.width + 10
-                        height: leftToolbar.btnSize
-                        radius: 10
-                        color:  Qt.rgba(0.145, 0.157, 0.188, leftToolbar.bgAlpha)
-                        Row {
-                            id: colorSubRow
-                            anchors.centerIn: parent
-                            spacing: 2
-                            Repeater {
-                                model: [
-                                    { key: "RGB",       icon: "qrc:/icons/rgb.svg"       },
-                                    { key: "Intensity", icon: "qrc:/icons/intensity.svg" }
-                                ]
-                                delegate: Rectangle {
-                                    id: colorItem
-                                    required property var modelData
-                                    width:  leftToolbar.btnSize
-                                    height: leftToolbar.btnSize
-                                    radius: 8
-                                    color:  leftToolbar.activeColor === colorItem.modelData.key
-                                            ? Qt.rgba(0.898, 0.482, 0.016, 0.85) : "transparent"
-                                    Behavior on color { ColorAnimation { duration: 150 } }
-                                    ToolButton {
-                                        anchors.fill: parent
-                                        icon.source:  colorItem.modelData.icon
-                                        icon.width:   leftToolbar.iconSize
-                                        icon.height:  leftToolbar.iconSize
-                                        icon.color:   leftToolbar.activeColor === colorItem.modelData.key
-                                                      ? "white" : "#8A94A8"
-                                        display: AbstractButton.IconOnly
-                                        background: Item {}
-                                        onClicked: {
-                                            leftToolbar.activeColor = colorItem.modelData.key
-                                            pcGeom.colorMode = (colorItem.modelData.key === "RGB")
-                                                ? PointCloudGeometry.RGB
-                                                : PointCloudGeometry.Intensity
-                                            leftToolbar.closeGroups()
-                                        }
-                                    }
-                                }
-                            }
-                        }
-                    }
+        onOperation: function(group, key, args) {
+            switch(group) {
+            case "color":
+                pcGeom.colorMode = (key === "RGB") ? PointCloudGeometry.RGB : PointCloudGeometry.Intensity
+                break
+            case "view":
+                view3DRoot.applyPreset(key)
+                break
+            case "filter":
+                const value = (args && args[0]) || 0
+                if ("firstIntensity" === key) {
+                    pcGeom.intensityMin = value
+                } else if ("secondIntensity" === key) {
+                    pcGeom.intensityMax = value
                 }
             }
-
-            // ══════════════════════════════════════════════════════
-            // 组 2：视角切换
-            // ══════════════════════════════════════════════════════
-            Row {
-                spacing: leftToolbar.groupGap
-
-                Rectangle {
-                    id: viewMainBtn
-                    width:  leftToolbar.btnSize
-                    height: leftToolbar.btnSize
-                    radius: 10
-                    color:  leftToolbar.viewGroupOpen
-                            ? Qt.rgba(0.898, 0.482, 0.016, 0.92)
-                            : Qt.rgba(0.102, 0.11, 0.125, leftToolbar.bgAlpha)
-                    Behavior on color { ColorAnimation { duration: 180 } }
-
-                    property string currentIcon: {
-                        switch (leftToolbar.activeView) {
-                            case "front": return "qrc:/icons/front_view.svg"
-                            case "left":  return "qrc:/icons/left_view.svg"
-                            case "right": return "qrc:/icons/right_view.svg"
-                            case "top":   return "qrc:/icons/top_view.svg"
-                            default:      return "qrc:/icons/back_view.svg"
-                        }
-                    }
-                    ToolButton {
-                        anchors.fill: parent
-                        icon.source:  viewMainBtn.currentIcon
-                        icon.width:   leftToolbar.iconSize
-                        icon.height:  leftToolbar.iconSize
-                        icon.color:   leftToolbar.viewGroupOpen ? "white" : "#B0B8C8"
-                        display:      AbstractButton.IconOnly
-                        background:   Item {}
-                        onClicked:    leftToolbar.viewGroupOpen
-                                      ? leftToolbar.closeGroups()
-                                      : leftToolbar.openGroup("view")
-                    }
-                }
-
-                Row {
-                    spacing: leftToolbar.groupGap
-                    visible: leftToolbar.viewGroupOpen
-                    Rectangle {
-                        width:  viewSubRow.width + 10
-                        height: leftToolbar.btnSize
-                        radius: 10
-                        color:  Qt.rgba(0.145, 0.157, 0.188, leftToolbar.bgAlpha)
-                        Row {
-                            id: viewSubRow
-                            anchors.centerIn: parent
-                            spacing: 2
-                            Repeater {
-                                model: [
-                                    { key: "back",  icon: "qrc:/icons/back_view.svg"  },
-                                    { key: "front", icon: "qrc:/icons/front_view.svg" },
-                                    { key: "left",  icon: "qrc:/icons/left_view.svg"  },
-                                    { key: "right", icon: "qrc:/icons/right_view.svg" },
-                                    { key: "top",   icon: "qrc:/icons/top_view.svg"   }
-                                ]
-                                delegate: Rectangle {
-                                    id: viewItem
-                                    required property var modelData
-                                    width:  leftToolbar.btnSize
-                                    height: leftToolbar.btnSize
-                                    radius: 8
-                                    color:  leftToolbar.activeView === viewItem.modelData.key
-                                            ? Qt.rgba(0.898, 0.482, 0.016, 0.85) : "transparent"
-                                    Behavior on color { ColorAnimation { duration: 150 } }
-                                    ToolButton {
-                                        anchors.fill: parent
-                                        icon.source:  viewItem.modelData.icon
-                                        icon.width:   leftToolbar.iconSize
-                                        icon.height:  leftToolbar.iconSize
-                                        icon.color:   leftToolbar.activeView === viewItem.modelData.key
-                                                      ? "white" : "#8A94A8"
-                                        display: AbstractButton.IconOnly
-                                        background: Item {}
-                                        onClicked: {
-                                            leftToolbar.activeView = viewItem.modelData.key
-                                            view3DRoot.applyPreset(viewItem.modelData.key)
-                                            leftToolbar.closeGroups()
-                                        }
-                                    }
-                                }
-                            }
-                        }
-                    }
-                }
-            }
-
-            // ══════════════════════════════════════════════════════
-            // 组 3：点云滤波面板
-            // ══════════════════════════════════════════════════════
-            Row {
-                spacing: leftToolbar.groupGap
-
-                Rectangle {
-                    width:  leftToolbar.btnSize
-                    height: leftToolbar.btnSize
-                    radius: 10
-                    color:  leftToolbar.filterGroupOpen
-                            ? Qt.rgba(0.898, 0.482, 0.016, 0.92)
-                            : Qt.rgba(0.102, 0.11, 0.125, leftToolbar.bgAlpha)
-                    Behavior on color { ColorAnimation { duration: 180 } }
-                    ToolButton {
-                        anchors.fill: parent
-                        icon.source:  "qrc:/icons/pointcloud_filter.svg"
-                        icon.width:   leftToolbar.iconSize
-                        icon.height:  leftToolbar.iconSize
-                        icon.color:   leftToolbar.filterGroupOpen ? "white" : "#B0B8C8"
-                        display:      AbstractButton.IconOnly
-                        background:   Item {}
-                        onClicked:    leftToolbar.filterGroupOpen
-                                      ? leftToolbar.closeGroups()
-                                      : leftToolbar.openGroup("filter")
-                    }
-                }
-
-                Item {
-                    visible: leftToolbar.filterGroupOpen
-                    width:   filterPanel.width
-                    height:  leftToolbar.btnSize
-                    clip:    false
-
-                    Rectangle {
-                        id: filterPanel
-                        anchors.top: parent.top
-                        width:  filterContent.width + 24
-                        height: filterContent.height + 24
-                        radius: 10
-                        color:  Qt.rgba(0.145, 0.157, 0.188, leftToolbar.bgAlpha)
-
-                        Column {
-                            id: filterContent
-                            anchors.centerIn: parent
-                            spacing: 14
-                            width: 220
-
-                            Row {
-                                spacing: 8
-                                Rectangle {
-                                    width: 8; height: 8; radius: 4
-                                    color: "#4CAF50"
-                                    anchors.verticalCenter: parent.verticalCenter
-                                }
-                                Label {
-                                    text: "点数: " + pcGeom.pointCount.toLocaleString()
-                                    color: "#CCCCCC"
-                                    font.pixelSize: 12
-                                }
-                            }
-
-                            Rectangle {
-                                width: parent.width; height: 1
-                                color: Qt.rgba(1, 1, 1, 0.08)
-                            }
-
-                            Column {
-                                width: parent.width
-                                spacing: 6
-
-                                Row {
-                                    width: parent.width
-                                    Label {
-                                        text: "反射率过滤"
-                                        color: "#AAAAAA"
-                                        font.pixelSize: 11
-                                    }
-                                    Item {
-                                        width: parent.width
-                                                 - rangeValLabel.implicitWidth - 55
-                                        height: 1
-                                    }
-                                    Label {
-                                        id: rangeValLabel
-                                        text: intensityRangeSlider.first.value.toFixed(0)
-                                              + " – "
-                                              + intensityRangeSlider.second.value.toFixed(0)
-                                        color: leftToolbar.accentColor
-                                        font.pixelSize: 11
-                                    }
-                                }
-
-                                RangeSlider {
-                                    id: intensityRangeSlider
-                                    width:    parent.width
-                                    from:     0
-                                    to:       255
-                                    stepSize: 1
-
-                                    first.value:  pcGeom.intensityMin
-                                    second.value: pcGeom.intensityMax
-
-                                    first.onPressedChanged: {
-                                        if (!first.pressed)
-                                            pcGeom.intensityMin = first.value
-                                    }
-                                    second.onPressedChanged: {
-                                        if (!second.pressed)
-                                            pcGeom.intensityMax = second.value
-                                    }
-                                }
-                            }
-                        }
-                    }
-                }
-            }
-            // ══════════════════════════════════════════════════════
         }
     }
     // ═══════════════════════════════════════════════════════════════

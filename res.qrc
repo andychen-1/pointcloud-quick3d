@@ -6,6 +6,8 @@
         <file>shaders/cornerbracket.frag</file>
         <file>Components/AppTheme.qml</file>
         <file>Components/AppTools.qml</file>
+        <file>Pages/PC3DToolbar.qml</file>
+        <file>Pages/View3DForPC.qml</file>
         <file>Main.qml</file>
         <file>icons/top_view.svg</file>
         <file>icons/right_view.svg</file>

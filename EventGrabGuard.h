@@ -1,5 +1,5 @@
-#ifndef EVENTSTEALINGPREVENTOR_H
-#define EVENTSTEALINGPREVENTOR_H
+#ifndef EVENTGRABGUARD_H
+#define EVENTGRABGUARD_H
 
 // EventBlocker.h
 #pragma once
@@ -7,7 +7,7 @@
 #include <QQuickItem>
 #include <QPointer>
 
-class EventStealingPreventor : public QObject
+class EventGrabGuard : public QObject
 {
     Q_OBJECT
     QML_ELEMENT
@@ -19,7 +19,7 @@ class EventStealingPreventor : public QObject
     Q_PROPERTY(bool blocking READ blocking NOTIFY blockingChanged)
 
 public:
-    explicit EventStealingPreventor(QObject *parent = nullptr);
+    explicit EventGrabGuard(QObject *parent = nullptr);
 
     QQuickItem *guardedItem() const { return m_item; }
     void setGuardedItem(QQuickItem *item);
@@ -47,4 +47,4 @@ private:
     bool m_blocking = false;
 };
 
-#endif // EVENTSTEALINGPREVENTOR_H
+#endif // EVENTGRABGUARD_H

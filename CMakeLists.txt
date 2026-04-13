@@ -21,6 +21,7 @@ qt_add_qml_module(apppointcloud3d
         Main.qml
         Components/AppTheme.qml
         Components/AppTools.qml
+        Pages/PC3DToolbar.qml
         Pages/View3DForPC.qml
     SOURCES
         AndroidUtils.h
@@ -31,8 +32,8 @@ qt_add_qml_module(apppointcloud3d
         PcdLoader.cpp
         PointCloudGeometry.h
         PointCloudGeometry.cpp
-        EventStealingPreventor.h
-        EventStealingPreventor.cpp
+        EventGrabGuard.h
+        EventGrabGuard.cpp
     RESOURCES
         shaders/pointcloud.frag
         shaders/pointcloud.vert
