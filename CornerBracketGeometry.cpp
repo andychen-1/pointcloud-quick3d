@@ -133,8 +133,7 @@ void CornerBracketGeometry::rebuild()
     setVertexData(vdata);
     setStride(STRIDE);
     setPrimitiveType(QQuick3DGeometry::PrimitiveType::Triangles);
-    addAttribute(QQuick3DGeometry::Attribute::PositionSemantic,
-                 0, QQuick3DGeometry::Attribute::F32Type);
+    addAttribute(QQuick3DGeometry::Attribute::PositionSemantic, 0, QQuick3DGeometry::Attribute::F32Type);
     setBounds(QVector3D(-h, -h, -h), QVector3D(h, h, h));
     update();
 }

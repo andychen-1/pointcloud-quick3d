@@ -12,7 +12,7 @@ int main(int argc, char *argv[])
         &app,
         []() { QCoreApplication::exit(-1); },
         Qt::QueuedConnection);
-    engine.load(QUrl(QStringLiteral("qrc:/Main.qml")));
+    engine.loadFromModule("pointcloud3d", "Main");
 
     return app.exec();
 }

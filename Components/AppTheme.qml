@@ -184,7 +184,22 @@ Item {
                 "main": "#000080",
                 "light": "#000080",
                 "dark": "#0000B2"
-            }
+            },
+            "material": {
+                "primary": "#E78518",
+                "light": "#FFBC72",
+                "warning": "#EA4335",
+                "text": {
+                  "main": "#D0D8D8",
+                  "light": "white",
+                  "dark": "#8A94A8",
+                },
+                "background": {
+                  "main": "transparent",
+                  "light": "#D0D8D8",
+                  "dark": "#8A94A8",
+                }
+            },
         }
 
         function update() {
@@ -199,25 +214,33 @@ Item {
         }
     }
 
-    function color(path, defaultColor = "#000") {
-        let result
-        if(typeof(path) === 'string' && !!path) {
-            const names = path.split(".")
-            if (names[0]) {
-                result = _palette.raw[names[0]]
-                for(let i = 1; i < names.length; i++) {
-                    if (!result || typeof(result) !== 'object') {
-                        return defaultColor
-                    }
-                    result = result[names[i]]
-                }
+    function color(path, opacity) {
+        const defaultColor = _palette.raw.primary.main
+
+        const keys = path.split(".")
+        let node = _palette.raw
+        for (const key of keys) {
+            if (node === undefined || node === null || typeof node !== "object") {
+                return defaultColor
             }
+            node = node[key]
         }
-        if (typeof(result) !== "string" || !result || result[0] !== "#") {
+        if (node === undefined || node === null || typeof node !== "string") {
             return defaultColor
-        } else {
-            return result
         }
+
+        const hex = node.trim()
+
+        if (opacity === undefined || opacity === null || opacity >= 1.0) {
+            return hex
+        }
+
+        const r = parseInt(hex.slice(1, 3), 16) / 255
+        const g = parseInt(hex.slice(3, 5), 16) / 255
+        const b = parseInt(hex.slice(5, 7), 16) / 255
+        const a = Math.max(0, Math.min(1, opacity))
+
+        return Qt.rgba(r, g, b, a)
     }
 
     Component.onCompleted: {

@@ -1,9 +1,10 @@
 import QtQuick
-
+import QtQuick.Controls
+import QtQuick.Controls.Material
 
 import pointcloud3d
 
-Window {
+ApplicationWindow {
     id: mainWin
     title: "LiDAR Point Cloud Viewer"
 
@@ -28,6 +29,6 @@ Window {
 
     Component {
         id: view3DComponent
-        View3DForPC {}
+        View3DPC {}
     }
 }

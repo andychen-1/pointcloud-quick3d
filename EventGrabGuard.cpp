@@ -46,7 +46,7 @@ void EventGrabGuard::reInstall() {
 
 bool EventGrabGuard::eventFilter(QObject *, QEvent *event) {
     if (!m_active || !m_item || !m_item->isVisible())
-        return false;   // ← 始终不消费，事件正常流通
+        return false;
 
     switch (event->type()) {
     case QEvent::TouchBegin: {
@@ -58,20 +58,13 @@ bool EventGrabGuard::eventFilter(QObject *, QEvent *event) {
         }
         break;
     }
-    case QEvent::MouseButtonPress: {
-        auto *me = static_cast<QMouseEvent *>(event);
-        QPointF local = m_item->mapFromScene(me->scenePosition());
-        setBlocking(m_item->contains(local));
-        break;
-    }
     case QEvent::TouchEnd:
     case QEvent::TouchCancel:
-    case QEvent::MouseButtonRelease:
         setBlocking(false);
         break;
     default:
         break;
     }
 
-    return false;   // ← 关键：永远不吃掉事件
+    return false;   // 不消费事件
 }

@@ -2,6 +2,7 @@ pragma ComponentBehavior: Bound
 
 import QtQuick
 import QtQuick.Controls
+import QtQuick.Controls.Material
 
 Item {
     id: control
@@ -21,9 +22,10 @@ Item {
     readonly property real  bgAlpha:    0.78
     readonly property color accentColor: "#E57B04"
 
-    property bool colorGroupOpen:  false
-    property bool viewGroupOpen:   false
-    property bool filterGroupOpen: false
+    property bool colorGroupOpen:    false
+    property bool viewGroupOpen:     false
+    property bool filterGroupOpen:   false
+    property bool enableSelectPoint: false
 
     readonly property bool anyGroupOpen: colorGroupOpen || viewGroupOpen || filterGroupOpen
 
@@ -59,6 +61,42 @@ Item {
         spacing: control.colSpacing
 
         // ══════════════════════════════════════════════════════
+        // 选点切换按钮
+        // ══════════════════════════════════════════════════════
+        Rectangle {
+            id: selPointBtn
+            width:  control.btnSize
+            height: control.btnSize
+            radius: 10
+            color:  control.enableSelectPoint
+                    ? "#E78518"
+                    : Qt.rgba(0.102, 0.11, 0.125, control.bgAlpha)
+            Behavior on color { ColorAnimation { duration: 180 } }
+
+            ToolButton {
+                anchors.fill: parent
+                icon.source:  "qrc:/qt/qml/pointcloud3d/icons/point_select.svg"
+                icon.width:   control.iconSize
+                icon.height:  control.iconSize
+                icon.color:   control.enableSelectPoint ? "white" : "#B0B8C8"
+                display:      AbstractButton.IconOnly
+                background:   Item {}
+                onClicked:    control.enableSelectPoint = !control.enableSelectPoint
+            }
+        }
+
+        Item {
+            width: control.btnSize
+            height: control.btnSize / 2
+
+            Rectangle {
+                width: parent.width
+                anchors.verticalCenter: parent.verticalCenter
+                height: 1; color: Qt.rgba(1, 1, 1, 0.1)
+            }
+        }
+
+        // ══════════════════════════════════════════════════════
         // 组 1：颜色模式
         // ══════════════════════════════════════════════════════
         Row {
@@ -70,14 +108,14 @@ Item {
                 height: control.btnSize
                 radius: 10
                 color:  control.colorGroupOpen
-                        ? Qt.rgba(0.898, 0.482, 0.016, 0.92)
+                        ? "#E78518"
                         : Qt.rgba(0.102, 0.11, 0.125, control.bgAlpha)
                 Behavior on color { ColorAnimation { duration: 180 } }
 
                 property string currentIcon: {
                     switch (control.activeColor) {
-                        case "RGB": return "qrc:/icons/rgb.svg"
-                        case "Intensity": return "qrc:/icons/intensity.svg"
+                        case "RGB": return "qrc:/qt/qml/pointcloud3d/icons/rgb.svg"
+                        case "Intensity": return "qrc:/qt/qml/pointcloud3d/icons/intensity.svg"
                     }
                 }
 
@@ -109,8 +147,8 @@ Item {
                         spacing: 2
                         Repeater {
                             model: [
-                                { key: "RGB",       icon: "qrc:/icons/rgb.svg"       },
-                                { key: "Intensity", icon: "qrc:/icons/intensity.svg" }
+                                { key: "RGB",       icon: "qrc:/qt/qml/pointcloud3d/icons/rgb.svg"       },
+                                { key: "Intensity", icon: "qrc:/qt/qml/pointcloud3d/icons/intensity.svg" }
                             ]
                             delegate: Rectangle {
                                 id: colorItem
@@ -155,17 +193,18 @@ Item {
                 height: control.btnSize
                 radius: 10
                 color:  control.viewGroupOpen
-                        ? Qt.rgba(0.898, 0.482, 0.016, 0.92)
+                        ? "#E78518"
                         : Qt.rgba(0.102, 0.11, 0.125, control.bgAlpha)
                 Behavior on color { ColorAnimation { duration: 180 } }
 
                 property string currentIcon: {
                     switch (control.activeView) {
-                        case "front": return "qrc:/icons/front_view.svg"
-                        case "left":  return "qrc:/icons/left_view.svg"
-                        case "right": return "qrc:/icons/right_view.svg"
-                        case "top":   return "qrc:/icons/top_view.svg"
-                        default:      return "qrc:/icons/back_view.svg"
+                        case "front":  return "qrc:/qt/qml/pointcloud3d/icons/front_view.svg"
+                        case "left":   return "qrc:/qt/qml/pointcloud3d/icons/left_view.svg"
+                        case "right":  return "qrc:/qt/qml/pointcloud3d/icons/right_view.svg"
+                        case "top":    return "qrc:/qt/qml/pointcloud3d/icons/top_view.svg"
+                        case "bottom": return "qrc:/qt/qml/pointcloud3d/icons/bottom_view.svg"
+                        default:       return "qrc:/qt/qml/pointcloud3d/icons/back_view.svg"
                     }
                 }
                 ToolButton {
@@ -196,11 +235,12 @@ Item {
                         spacing: 2
                         Repeater {
                             model: [
-                                { key: "back",  icon: "qrc:/icons/back_view.svg"  },
-                                { key: "front", icon: "qrc:/icons/front_view.svg" },
-                                { key: "left",  icon: "qrc:/icons/left_view.svg"  },
-                                { key: "right", icon: "qrc:/icons/right_view.svg" },
-                                { key: "top",   icon: "qrc:/icons/top_view.svg"   }
+                                { key: "back",   icon: "qrc:/qt/qml/pointcloud3d/icons/back_view.svg"   },
+                                { key: "front",  icon: "qrc:/qt/qml/pointcloud3d/icons/front_view.svg"  },
+                                { key: "left",   icon: "qrc:/qt/qml/pointcloud3d/icons/left_view.svg"   },
+                                { key: "right",  icon: "qrc:/qt/qml/pointcloud3d/icons/right_view.svg"  },
+                                { key: "top",    icon: "qrc:/qt/qml/pointcloud3d/icons/top_view.svg"    },
+                                { key: "bottom", icon: "qrc:/qt/qml/pointcloud3d/icons/bottom_view.svg" },
                             ]
                             delegate: Rectangle {
                                 id: viewItem
@@ -249,7 +289,7 @@ Item {
                 Behavior on color { ColorAnimation { duration: 180 } }
                 ToolButton {
                     anchors.fill: parent
-                    icon.source:  "qrc:/icons/pointcloud_filter.svg"
+                    icon.source:  "qrc:/qt/qml/pointcloud3d/icons/pointcloud_filter.svg"
                     icon.width:   control.iconSize
                     icon.height:  control.iconSize
                     icon.color:   control.filterGroupOpen ? "white" : "#B0B8C8"
@@ -332,6 +372,8 @@ Item {
                                 from:     control.pcGeomAttrs.minIntensity
                                 to:       control.pcGeomAttrs.maxIntensity
                                 stepSize: 1
+
+                                Material.accent: control.accentColor
 
                                 first.value:  control.pcGeomAttrs.firstIntensity
                                 second.value: control.pcGeomAttrs.secondIntensity

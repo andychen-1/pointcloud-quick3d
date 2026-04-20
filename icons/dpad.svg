@@ -1,0 +1,8 @@
+<?xml version="1.0" encoding="utf-8"?>
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 256 256" width="256px" height="256px" xmlns:bx="https://boxy-svg.com">
+<path d="M 128 128 m -32 0 a 32 32 0 1 0 64 0 a 32 32 0 1 0 -64 0 Z M 128 128 m -16 0 a 16 16 0 0 1 32 0 a 16 16 0 0 1 -32 0 Z" style="stroke: rgb(0, 0, 0); fill: rgb(0, 0, 0);"/>
+  <path d="M 184 106 L 228 128 L 184 150 L 184 106 Z" style="stroke: rgb(0, 0, 0); fill: rgb(0, 0, 0); stroke-width: 2px;"/>
+  <path d="M 28 128 L 72 106 L 72 150 L 28 128 Z" style="stroke: rgb(0, 0, 0); fill: rgb(0, 0, 0); stroke-width: 2px;"/>
+  <path d="M 128 28 L 150 72 L 106 72 L 128 28 Z" style="stroke: rgb(0, 0, 0); fill: rgb(0, 0, 0); stroke-width: 2px;"/>
+  <path d="M 106 184 L 150 184 L 128 228 L 106 184 Z" style="stroke: rgb(0, 0, 0); fill: rgb(0, 0, 0); stroke-width: 2px;" />
+</svg>
