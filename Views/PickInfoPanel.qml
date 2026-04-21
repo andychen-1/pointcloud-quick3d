@@ -25,12 +25,30 @@ Rectangle {
 
     signal clearAll()
 
-    Component.onCompleted: {
-        if (dpadCtr.children && dpadCtr.children.length > 0) {
-            const dpad = AppTools.findComponent(dpadCtr.children, (child)=> child instanceof DPadPC)
-            if (dpad) {
-                dpad.anchors.fill = dpadCtr
-            }
+    function scrollToVisible(ptId, delay = 0) {
+        if (model) {
+            AppTools.setTimeout(function() {
+                for (let i = 0; i < model.count; i++) {
+                    if (model.get(i).ptId === ptId) {
+                        selListView.positionViewAtIndex(i, ListView.Contain)
+                        break;
+                    }
+                }
+            }, delay)
+        }
+    }
+
+    // 添加点时滚动当前激活点信息条目到列表的可见区域
+    onActivePtIdChanged: {
+        if (activePtId >= 0) {
+            scrollToVisible(activePtId)
+        }
+    }
+
+    // 修改点时滚动当前激活点信息条目到列表的可见区域
+    onShowEditorChanged: {
+        if (showEditor) {
+            scrollToVisible(activePtId, 220)
         }
     }
 

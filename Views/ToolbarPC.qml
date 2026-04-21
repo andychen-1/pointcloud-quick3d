@@ -92,7 +92,7 @@ Item {
             Rectangle {
                 width: parent.width
                 anchors.verticalCenter: parent.verticalCenter
-                height: 1; color: Qt.rgba(1, 1, 1, 0.1)
+                height: 1; color: Qt.rgba(1, 1, 1, 0.2)
             }
         }
 

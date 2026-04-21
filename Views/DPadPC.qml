@@ -8,6 +8,7 @@ import pointcloud3d
 
 Rectangle {
     id: control
+    anchors.fill: parent
     color: "transparent"
     clip: true
 
