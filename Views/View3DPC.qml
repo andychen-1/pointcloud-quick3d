@@ -12,11 +12,10 @@ import pointcloud3d
 Page {
     id: view3DRoot
 
-    property string defaultViewName: "back"
-
     // ── 激活点 / 编辑状态 ─────────────────────────────────────────
     readonly property int activePtId: pickInfoPanel.activePtId
-    property int _nextPtId: 0
+
+    readonly property string defaultViewName: "back"
 
     // ── 辅助函数 ─────────────────────────────────────────────────
     function modelIndexOfPtId(ptId) {
@@ -66,6 +65,7 @@ Page {
     QtObject {
         id: _view
         property string name: view3DRoot.defaultViewName
+        property int nextPtId: 0
         readonly property var presets: {
             const kVFov  = orbitCamera.fieldOfView
             const halfT  = Math.tan(kVFov * Math.PI / 180.0 * 0.5)
@@ -236,7 +236,7 @@ Page {
                 } else {
                     const scenePt = pcGeom.scenePointAt(idx)
                     const rawPt   = pcGeom.rawPointAt(idx)
-                    const newId   = view3DRoot._nextPtId++
+                    const newId   = _view.nextPtId++
                     selectionModel.append({
                         ptId: newId, rawIdx: idx,
                         rawX: rawPt.x, rawY: rawPt.y, rawZ: rawPt.z,
@@ -286,6 +286,17 @@ Page {
                     ctx.fill()
                 }
             }
+        }
+    }
+
+    // ── 坐标轴指示器 ──────────────────────────────────────────────
+    AxisIndicator {
+        camera: orbitCamera
+        anchors {
+            left:         parent.left
+            leftMargin:   100
+            bottom:       parent.bottom
+            bottomMargin: 20
         }
     }
 

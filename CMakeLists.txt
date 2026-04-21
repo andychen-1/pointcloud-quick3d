@@ -26,6 +26,8 @@ qt_add_qml_module(apppointcloud3d
         Views/DPadPC.qml
         Views/ToolbarPC.qml
         Views/View3DPC.qml
+        Views/PickInfoPanel.qml
+        Views/AxisIndicator.qml
     SOURCES
         AndroidUtils.h AndroidUtils.cpp
         CornerBracketGeometry.h CornerBracketGeometry.cpp
@@ -45,7 +47,6 @@ qt_add_qml_module(apppointcloud3d
         QtQuick.Controls
         QtQuick.Controls.Material
         QtQuick3D
-        QML_FILES Views/PickInfoPanel.qml
 )
 
 set_property(TARGET apppointcloud3d APPEND PROPERTY
