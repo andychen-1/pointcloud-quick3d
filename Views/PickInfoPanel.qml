@@ -11,7 +11,7 @@ Rectangle {
     anchors { top: parent.top; right: parent.right; bottom: parent.bottom
               topMargin: 20; rightMargin: 20; bottomMargin: 20 }
     width: 280
-    color: "#20808080";
+    color: "#C61A1C20";
     radius: 8
     visible: model?.count > 0
 

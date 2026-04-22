@@ -4,6 +4,7 @@ import QtQuick3D
 Item {
     id: control
     width: 80; height: 80
+
     required property Camera camera
 
     function rotByQuat(q, v) {
@@ -18,6 +19,16 @@ Item {
         }
     }
 
+    Rectangle {
+        anchors.centerIn: parent
+        width: 68
+        height: 68
+        border.width: 1
+        border.color: Qt.rgba(1, 1, 1, 0.2)
+        color: Qt.rgba(0.05,0.05,0.05,0.72)
+        radius: 34
+    }
+
     Canvas {
         id: canvas
         anchors.fill: parent
@@ -26,7 +37,6 @@ Item {
             const ctx = getContext("2d")
             ctx.clearRect(0, 0, width, height)
 
-            // 原点偏下居中，留出上方 Z 轴空间
             const cx = width  * 0.50
             const cy = height * 0.58
             const arm = 26    // 轴长（像素）
@@ -41,15 +51,6 @@ Item {
                 { v: {x:-1,y:0,z:0}, col: "#33CC33", lbl: "Y" },
                 { v: {x:0,y:1,z:0}, col: "#3333CC", lbl: "Z" },
             ]
-
-            // 背景圆
-            ctx.beginPath()
-            ctx.arc(cx, cy, 34, 0, Math.PI * 2)
-            ctx.fillStyle = "rgba(13,13,15,0.72)"
-            ctx.fill()
-            ctx.strokeStyle = "rgba(255,255,255,0.07)"
-            ctx.lineWidth = 1
-            ctx.stroke()
 
             // 投影到屏幕坐标，按深度排序（背面先画）
             const proj = axes.map(a => {

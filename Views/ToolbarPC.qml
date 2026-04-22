@@ -85,6 +85,7 @@ Item {
             }
         }
 
+        // 分割线
         Item {
             width: control.btnSize
             height: control.btnSize / 2

@@ -1,8 +1,4 @@
 <?xml version="1.0" encoding="utf-8"?>
-<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 256 256" width="256px" height="256px" xmlns:bx="https://boxy-svg.com">
-<path d="M 128 128 m -32 0 a 32 32 0 1 0 64 0 a 32 32 0 1 0 -64 0 Z M 128 128 m -16 0 a 16 16 0 0 1 32 0 a 16 16 0 0 1 -32 0 Z" style="stroke: rgb(0, 0, 0); fill: rgb(0, 0, 0);"/>
-  <path d="M 184 106 L 228 128 L 184 150 L 184 106 Z" style="stroke: rgb(0, 0, 0); fill: rgb(0, 0, 0); stroke-width: 2px;"/>
-  <path d="M 28 128 L 72 106 L 72 150 L 28 128 Z" style="stroke: rgb(0, 0, 0); fill: rgb(0, 0, 0); stroke-width: 2px;"/>
-  <path d="M 128 28 L 150 72 L 106 72 L 128 28 Z" style="stroke: rgb(0, 0, 0); fill: rgb(0, 0, 0); stroke-width: 2px;"/>
-  <path d="M 106 184 L 150 184 L 128 228 L 106 184 Z" style="stroke: rgb(0, 0, 0); fill: rgb(0, 0, 0); stroke-width: 2px;" />
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 256 256" width="256px" height="256px">
+  <path d="M 159.2 81.2 L 159.2 24 L 96.8 24 L 96.8 81.2 L 128 112.4 L 159.2 81.2 Z M 81.2 96.8 L 24 96.8 L 24 159.2 L 81.2 159.2 L 112.4 128 L 81.2 96.8 Z M 96.8 174.8 L 96.8 232 L 159.2 232 L 159.2 174.8 L 128 143.6 L 96.8 174.8 Z M 174.8 96.8 L 143.6 128 L 174.8 159.2 L 232 159.2 L 232 96.8 L 174.8 96.8 Z" style="stroke-width: 1;" transform="matrix(1, 0, 0, 1, 0, 0)"/>
 </svg>
